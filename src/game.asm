@@ -1,16 +1,18 @@
-org  0x8A00
+org  0x8000
 bits 16
 
-    jmp startProgram
-    nop
+jmp startProgram
+nop
 
-; Variables 
+; Variables ------------------------------------------------------------------------------------------------
 
 time db  00h                        ; tiempo que representa los FPS del programa
 
+level dw 01h                        ; Nivel del juego
 
 
-; Constantes 
+
+; Constantes -----------------------------------------------------------------------------------------------
 
 width dw  140h                      ; Ancho de la pantalla 320 p
 height dw  0c8h                     ; Alto de la pantalla 200 p
@@ -24,13 +26,19 @@ menuSpace dw '   Presione ESPACIO para continuar  ', 0h
 textColor     dw 09h
 
 
-;Inicia el juego
+;Inicia el programa completo. El usuario ve la pantalla de bienvenida -----------------------------------------------
 startProgram:
         call initDisplay    ; Inicia el display que mostrara el contenido del juego
         call clearScreen    ; Limpia el contenido de la pantalla
         jmp  menuLoop       ; Luego de iniciar la pantalla y limpiarla con pixeles negros, se salta al menu inicial
 
-    
+;Inicia el programa completo. El usuario ve la pantalla del primer nivel -----------------------------------------------  
+startGame:                          ; Funcion de inicio del juego
+    call    setLevel1               ; Llama a la funcion para colocar los parametros del primer nivel
+    call    clearScreen             ; Llama a la funcion para limpiar la pantalla
+    jmp     gameLoop                ; Salta a la funcion principal del programa
+
+
 ; Inicia el display que mostrara el contenido del juego
 initDisplay:
     mov ah, 00h     ;  activa el modo  video
@@ -57,6 +65,20 @@ menuLoop:                           ; Ciclo principal del menu de bienvenida
 
     jmp     menuLoop                ; Salta al incio de la funcion
 
+; Loop principal del juego 
+
+gameLoop:                           ; Ciclo principal del juego
+    mov     ah, 00h                 ; Activa obtener el tiempo de la computadora
+    int     1ah                     ; Ejecutar interrupcion
+
+    call clearScreen
+
+    cmp     dl, [time]              ; Compara el tiempo actual con el tiempo anterior
+    je      gameLoop                ; Si son iguales vuelve a calcular el ciclo
+    mov     [time], dl              ; Sino, almacena el nuevo tiempo
+
+
+    jmp     gameLoop                ; Salta al incio de la funcion
 
 ;  Limpia el contenido que haya en la pantalla ----------------------------------------------------------
 
@@ -81,6 +103,7 @@ clearScreenAux2:
     cmp     dx, [height]            ; Compara dx con la altura de la pantalla
     jng     clearScreenAux          ; Si dx no es mayor que el ancho de la pantalla, salta a dibujar la siguiente fila
     ret                             ; Sino, Retornar
+
 
 
 ; Comprueba si el usuario presiona espacio en el menu de bienvenida ------------------------------------------
@@ -172,7 +195,11 @@ drawChar:                           ; Funcion encargada de dibujar un caracter
 finishDraw:                         ; Funcion de salida de texto
     ret                             ; Retornar
 
+; Define el nivel 1 y sus variables ----------------------------------------------------------------
 
+setLevel1:                          ; Funcion encargada de iniciar el primer nivel del juego
+    mov     ax, 01h                 ; Mueve 1 a ax
+    mov     [level], ax             ; Mueve ax al nivel actual
 
 
 ; Funcion encargada de retornar --------------------------------------------------
