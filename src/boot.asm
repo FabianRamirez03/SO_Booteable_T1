@@ -41,7 +41,7 @@ mov ah, 0
 int 0x13              ; 0x13 ah=0 dl = drive number
 jc errorpart
                       ;Read from harddrive and write to RAM
-mov bx, 0x8000        ; bx = address to write the kernel to. Game Direction
+mov bx, 0x8A00        ; bx = address to write the kernel to. Game Direction
 mov al, SECTOR_AMOUNT ; al = amount of sectors to read
 mov ch, 0             ; cylinder/track = 0
 mov dh, 0             ; head           = 0
@@ -49,7 +49,7 @@ mov cl, 2             ; sector         = 2
 mov ah, 2             ; ah = 2: read from drive
 int 0x13   		      ; => ah = status, al = amount read
 jc errorpart
-jmp 0x8000
+jmp 0x8A00
 
 
 errorpart:            ;if it went wrong you end here so let's display a message
