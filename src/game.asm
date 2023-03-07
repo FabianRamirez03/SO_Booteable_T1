@@ -7,9 +7,7 @@ nop
 ; Variables ------------------------------------------------------------------------------------------------
 
 time db  00h                        ; tiempo que representa los FPS del programa
-
 level dw 01h                        ; Nivel del juego
-
 
 
 ; Constantes -----------------------------------------------------------------------------------------------
@@ -17,14 +15,36 @@ level dw 01h                        ; Nivel del juego
 width dw  140h                      ; Ancho de la pantalla 320 p
 height dw  0c8h                     ; Alto de la pantalla 200 p
 
-menuDeco1 dw '------------------------------------', 0h
+gameHeight dw 8ch ; Board height set to 100p
+gameWidth dw 096h ; Board width set to 150p
+
+; Walls ----------------------------------------------------------------------------------------------------
+walls_color dw 150h ; walls color 
+walls_size  dw 0ah ; walls width and height set 6p
+walls_index dw 00h ; walls counter
+wallx dw 00h ; x wall pos
+wally dw 00h ; y wall pos
+
+walls_x_l1 dw 37h, 41h, 4bh ; Walls's X positions for L1
+walls_y_l1 dw 23h, 23h, 23bh ; Y positions for L1
+walls_n_l1 dw 03h ; Number of walls for L1
+
+walls_x times 3 dw 00h ; current walls positions
+walls_y times 3 dw 00h ; current walls positions
+walls_n dw 00h ; current walls number
+
+; Texts ---------------------------------------------------------------------------------------------------
+
+menuDeco1 dw '************************************', 0h
 menuTitle dw '            MOBILE MAZE             ', 0h
-menuWelc  dw '             Bienvenido             ', 0h
-menuDeco2 dw '------------------------------------', 0h
+menuWelc  dw '            BIENVENIDO              ', 0h
+menuDeco2 dw '************************************', 0h
 menuSpace dw '   Presione ESPACIO para continuar  ', 0h
 
-textColor     dw 09h
+textColor     dw 150h
 
+
+; GAME LOGIC ****************************************************************************************************
 
 ;Inicia el programa completo. El usuario ve la pantalla de bienvenida -----------------------------------------------
 startProgram:
@@ -45,8 +65,6 @@ initDisplay:
     mov al, 13h     ;  320x200 con 256 colores
     int 10h         ;  Interrupcion
     ret
-
-
 
 
 ;  Ciclo del menu de bienvenida -----------------------------------------------------------------------
@@ -77,8 +95,73 @@ gameLoop:                           ; Ciclo principal del juego
     je      gameLoop                ; Si son iguales vuelve a calcular el ciclo
     mov     [time], dl              ; Sino, almacena el nuevo tiempo
 
+    ;call checkKeys ; function to check whether the keys have been clicked or not  
+
+    ;call renderPlayer ; function to draw the player
+    call renderWalls ; function to draw the walls
+
+    ;call renderTextHints ; function to draw the hints for keyboard use
 
     jmp     gameLoop                ; Salta al incio de la funcion
+
+; Render functions **************************************************************************************
+
+renderWalls:
+    mov cx, [walls_index] ; loading the index to loop the walls
+    cmp cx, [walls_n] ; Comparing the counter with the number of walls
+    je exitWalls    ; if counter == walls_n : exit
+
+    mov ax, [walls_index] ; loading the walls index 
+    mov bx, [walls_x] ; loading first wall element in Walls X positions array
+    add bx, ax ; base_position + Index = current wall pointer
+    mov ax, [bx] ; X position for first wall
+    mov [walls_x], ax ; Store current X position
+    mov cx, [walls_x] ; Loads first wall position
+
+    mov ax, [walls_index] ; Loads walls index to AX
+
+    mov bx, walls_y ; loads first Y position pointer
+    add bx, ax ; base_Y_position + Index = current position
+    mov ax, [bx] ; loads first Y position
+    mov [walls_y], ax ; stores current Y position
+
+    jmp renderWalls_Aux
+
+renderWalls_Aux:
+    mov ah, 0ch ; Render pixel function
+    mov al, [walls_color] ; Walls color
+    mov bh, 00h ; Page
+    int 10h ; Execute interruption
+    inc cx ; Increments CX
+    mov ax, cx ; moves CX to AX
+    sub ax, [walls_x] ; WALL_WIDTH - CURRENT_COLUMN = TMP_RESULT
+    cmp ax, [walls_size] ; compares TMP_RESULT with wall width
+
+    jng renderWalls_Aux ; If not greater than 
+    jmp renderWalls_Aux2 ; else
+
+renderWalls_Aux2: 
+    mov cx, [walls_x] ; Reset number of columns
+    inc dx ; Increments DX
+    mov ax, dx ; moves DX to AX
+    sub ax, [walls_y] ; CURRENT_ROW - WALL_Y_POS = TMP_RESULT
+    cmp ax, [walls_size] ; compares TMP_RESULT with wall's height
+
+    jng renderWalls_Aux ; if not greater 
+    jmp renderWalls_Aux3 ; else
+
+renderWalls_Aux3:
+    mov cx, [walls_index] ; loads the walls index
+    add cx, 02h ; walls_index + 2
+    mov [walls_index], cs ; stores the new index
+
+    jmp renderWalls ; jumps to root render function
+
+exitWalls:
+    mov ax, 00h ; 
+    mov [walls_index], ax ; resets walls index
+
+    ret ; go back and continue the game loop.
 
 ;  Limpia el contenido que haya en la pantalla ----------------------------------------------------------
 
@@ -126,7 +209,6 @@ checkPlayerMenuAction:              ; Funcion encargada de verificar la tecla pr
 
 drawTextMenu:                       ; Funcion encargada de escribir los textos del menu de bienvenida
     mov     bx, [textColor]         ; Mueve a bx el color del texto
-    inc     bx                      ; Incrementa bx
     mov     [textColor], bx         ; Almacena el nuevo bx al color del texto
 
     ; Elemento decorativo de la pantalla de bienvenida
