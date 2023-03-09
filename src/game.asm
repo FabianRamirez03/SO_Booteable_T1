@@ -9,6 +9,16 @@ nop
 time db  00h                        ; tiempo que representa los FPS del programa
 level dw 01h                        ; Nivel del juego
 
+player_x dw 10h ; Player X Pos
+player_y dw 10h ; Player Y Pos
+player_speed dw 0ah ; player speed
+player_color dw 8eh ; player color
+player_size dw 0ah ; length of the side of the player
+
+player_xtmp dw 10h ; Temporal Player X Pos
+player_ytmp dw 10h ; Temporal Player Y Pos
+
+
 
 ; Constantes -----------------------------------------------------------------------------------------------
 
@@ -282,6 +292,56 @@ finishDraw:                         ; Funcion de salida de texto
 setLevel1:                          ; Funcion encargada de iniciar el primer nivel del juego
     mov     ax, 01h                 ; Mueve 1 a ax
     mov     [level], ax             ; Mueve ax al nivel actual
+
+    mov ax, 0ah ; This will be the margin and initial pos
+    mov [player_x], ax ; sets ax as initial X position
+    mov [player_y], ax ; sets ax as intial Y position
+    mov [player_xtmp], ax ; set ax as initial X tmp position
+    mov [player_ytmp], ax ; sets ax as initial Y tmp position
+
+    mov ax, [walls_n_l1] ; Number of walls for Level 1.
+    mov [walls_n], ax ; Stores the walls number during the game
+    mov cx, 00h ; resets CX, this is our counter for the walls rendering process
+    jmp setLevel1_Aux
+
+setLevel1_Aux: ; This iterates the X positions of the wall
+    cmp cx, [walls_n] ; walls_counter == walls_total
+    je setLevel1_Aux2 ; 
+    mov bx, walls_x_l1 ; Pointer to all the x positions for the walls in L1
+    add bx, cx ; moves the pointer to the next wall to render
+    mov ax, [bx] ; AX stores the current X position
+    mov bx, walls_x ; resets bx to the pointer of current walls x positions array
+    add bx, cx ; moves bx by cx times 
+    mov [bx], ax ; stores bx pointer in AX
+    add cx, 2 ; CX + 2
+    jmp setLevel_Aux
+
+
+setLevel1_Aux2: ; This iterates the Y position of the wall
+    mov cx, 00h ; resets CX
+    jmp setLevel1_Aux3 
+    
+
+setLevel1_Aux3:
+    cmp cx, [walls_n] ; counter_walls == walls_total
+    je setLevel1_Aux4 
+    mov bx, walls_y_l1 ; move the Y position pointer to BX
+    mov bx, cx ; moves the Y position to the current wall 
+    mov ax, [bx] ; moves current wall pos to AX
+    mov bx, walls_y ; moves on-game walls pointer to BX
+    add bx, cx ; moves the pointer to the current wall
+    mov [bx], ax ; stores AX in the BX pointer
+    add cx, 2 ; CX + 2
+    jmp setLevel1_Aux3 ; Go back to the loop
+
+
+setLevel1_Aux4: ; This iterates the Y position of the wall
+    mov cx, 00h ; resets CX
+    jmp setLevel1_Aux5
+
+setLevel1_Aux5:
+    ;;;;Quede aqui
+
 
 
 ; Funcion encargada de retornar --------------------------------------------------
