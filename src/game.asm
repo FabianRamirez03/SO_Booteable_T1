@@ -18,6 +18,7 @@ height dw  0c8h                     ; screen height 200 p
 gameHeight dw 8ch ; Board height set to 100p
 gameWidth dw 096h ; Board width set to 150p
 
+gamePaused dw 00h ; Flag to know if the game is paused
 
 ; player
 
@@ -102,18 +103,18 @@ gameLoop:                           ; Ciclo principal del juego
     mov     ah, 00h                 ; Activa obtener el tiempo de la computadora
     int     1ah                     ; Ejecutar interrupcion
 
-    call clearScreen
+    ;call clearScreen
 
     cmp     dl, [time]              ; Compara el tiempo actual con el tiempo anterior
     je      gameLoop                ; Si son iguales vuelve a calcular el ciclo
     mov     [time], dl              ; Sino, almacena el nuevo tiempo
 
-    ;call checkKeys ; function to check whether the keys have been clicked or not  
+    call checkPlayerGameInput       ; function to check whether the keys have been clicked or not  
 
-    call renderPlayer ; function to draw the player
-    ;call renderWalls ; function to draw the walls
+    call renderPlayer               ; function to draw the player
+    ;call renderWalls               ; function to draw the walls
 
-    ;call renderTextHints ; function to draw the hints for keyboard use
+    ;call renderTextHints           ; function to draw the hints for keyboard use
 
     jmp     gameLoop                ; Salta al incio de la funcion
 
@@ -320,12 +321,143 @@ renderPlayerAux:
 
 renderPlayerAux2:
     mov     cx, [player_x]            ; reset columns
-    inc     dx                      ; dx +1
+    inc     dx                        ; dx +1
     mov     ax, dx                  
     sub     ax, [player_y]            ; Substract player height with the current row
-    cmp     ax, [player_size]            ; compares if ax is greater than player size
-    jng     renderPlayerAux            ; if not greater, draw next row
-    ret                             ; Else, return
+    cmp     ax, [player_size]         ; compares if ax is greater than player size
+    jng     renderPlayerAux           ; if not greater, draw next row
+    ret                               ; Else, return
+
+
+deletePlayer:                       ; Funtion to erase player from screen
+    mov     al, 00h                 ; Move color black to al
+    mov     [player_color], al      ; Updates player color to black 
+    call    renderPlayer            ; Render player in color black
+    mov     al, 03h                 ; Set al as the original player color
+    mov     [player_color], al      ; Updates player color to black
+    ret                             ; return
+
+checkPlayerGameInput:
+    mov     ax, 00h                   ; Reset reg ax
+    cmp     ax, [gamePaused]           ; move the gamePaused Flag to ax
+    je      makeMovements             ; If the game is not paused, player can move 
+    ;jmp     checkPlayerPausedAction   ; If the game is paused, checks if the input is to unpaused the game
+
+
+makeMovements:
+    mov     ah, 01h                 ; gets keyboard status
+    int     16h                     ; interrupt 
+
+    jz      exitRoutine             ; if not pushed key, exit
+
+    mov     ah, 00h                 ; Read key
+    int     16h                     ; interrupt
+
+    cmp     ah, 48h                 ; If the key pushed is arrow up
+    je      playerUp                ; Moves player up
+    
+    cmp     ah, 50h                 ; If the key pushed is arrow down
+    je      playerDown              ; Moves player down
+
+    cmp     ah, 4dh                 ; If the key pushed is arrow right 
+    je      playerRight             ; Moves player right
+
+    cmp     ah, 4bh                 ; If the key pushed is arrow left 
+    je      playerLeft              ; Moves player left
+
+    ret
+
+playerUp:                           ; Moves player up
+    mov     ax, 05h                 ; Moves 5 to ax
+    cmp     [player_y], ax          ; compares the player_y to the up border
+    je      exitRoutine             ; if equal, return. Dont move
+
+    call    deletePlayer            ; Deletes player from screen
+
+    mov     ax, [player_y]          ; Mueve la posicion y del alien a ax
+    sub     ax, [player_speed]      ; Resta la velocidad del alien a ax
+    mov     [temp_player_y], ax     ; Almacena la nueva posicion en una variable temporal
+    ;call    checkAlienColision     ; Llama a la funcion para detectar colisiones del alien
+
+    ;cmp     ax, 00h                ; Verifica si ax es 0
+    ;je      exitAlienMovement      ; En caso de serlo, significa que la nueva posicion es invalida, y salta a la funcion de salida
+
+    mov     [player_y], ax            ; Updates pos y of player
+    
+    mov     ax, 03h                 ; Moves 3 to ax
+    mov     [player_dir], ax        ; moves 3 to the player direction
+
+    ret                             ; return
+
+
+playerDown:                         ; Moves player down
+    mov     ax, [gameHeight]        ; Moves the game height to ax
+    add     ax, 05h                 ; add 5 to ax 
+    cmp     [player_y], ax          ; compares the player_y to the up border
+    je      exitRoutine             ; if equal, return. Dont move
+
+    call    deletePlayer            ; Deletes player from screen
+
+    mov     ax, [player_y]          ; Mueve la posicion y del alien a ax
+    add     ax, [player_speed]      ; Resta la velocidad del alien a ax
+    mov     [temp_player_y], ax     ; Almacena la nueva posicion en una variable temporal
+    ;call    checkAlienColision     ; Llama a la funcion para detectar colisiones del alien
+
+    ;cmp     ax, 00h                ; Verifica si ax es 0
+    ;je      exitAlienMovement      ; En caso de serlo, significa que la nueva posicion es invalida, y salta a la funcion de salida
+
+    mov     [player_y], ax            ; Updates pos y of player
+    
+    mov     ax, 03h                 ; Moves 1 to ax
+    mov     [player_dir], ax        ; moves 1 to the player direction
+
+    ret                             ; return
+
+playerRight:                        ; Moves player right
+    mov     ax, [gameWidth]         ; Moves the game height to ax
+    add     ax, 05h                 ; add 5 to ax 
+    cmp     [player_x], ax          ; compares the player_y to the right border
+    je      exitRoutine             ; if equal, return. Dont move
+
+    call    deletePlayer            ; Deletes player from screen
+
+    mov     ax, [player_x]          ; Mueve la posicion x del alien a ax
+    add     ax, [player_speed]      ; Resta la velocidad del alien a ax
+    mov     [temp_player_x], ax     ; Almacena la nueva posicion en una variable temporal
+    ;call    checkAlienColision     ; Llama a la funcion para detectar colisiones del alien
+
+    ;cmp     ax, 00h                ; Verifica si ax es 0
+    ;je      exitAlienMovement      ; En caso de serlo, significa que la nueva posicion es invalida, y salta a la funcion de salida
+
+    mov     [player_x], ax          ; Updates pos y of player
+    
+    mov     ax, 00h                 ; Moves 0 to ax
+    mov     [player_dir], ax        ; moves 0 to the player direction
+
+    ret                             ; return
+
+playerLeft:                         ; Moves player left
+    mov     ax, 05h                 ; Moves the game height to ax
+    cmp     [player_x], ax          ; compares the player_y to the right border
+    je      exitRoutine             ; if equal, return. Dont move
+
+    call    deletePlayer            ; Deletes player from screen
+
+    mov     ax, [player_x]          ; Mueve la posicion x del alien a ax
+    sub     ax, [player_speed]      ; Resta la velocidad del alien a ax
+    mov     [temp_player_x], ax     ; Almacena la nueva posicion en una variable temporal
+    ;call    checkAlienColision     ; Llama a la funcion para detectar colisiones del alien
+
+    ;cmp     ax, 00h                ; Verifica si ax es 0
+    ;je      exitAlienMovement      ; En caso de serlo, significa que la nueva posicion es invalida, y salta a la funcion de salida
+
+    mov     [player_x], ax          ; Updates pos y of player
+    
+    mov     ax, 00h                 ; Moves 0 to ax
+    mov     [player_dir], ax        ; moves 0 to the player direction
+
+    ret                             ; return
+
 
 
 exitRoutine:                        ; Funcion encargada de retornar
