@@ -12,11 +12,24 @@ level dw 01h                        ; Nivel del juego
 
 ; Constantes -----------------------------------------------------------------------------------------------
 
-width dw  140h                      ; Ancho de la pantalla 320 p
-height dw  0c8h                     ; Alto de la pantalla 200 p
+width dw  140h                      ; screen width 320 p
+height dw  0c8h                     ; screen height 200 p
 
 gameHeight dw 8ch ; Board height set to 100p
 gameWidth dw 096h ; Board width set to 150p
+
+
+; player
+
+player_x dw      05h   ; x position player 
+player_y dw      05h   ; y position player 
+temp_player_x dw 05h   ; temp x position player
+temp_player_y dw 05h   ; temp y position player
+player_speed dw  0ah   ; player speed
+player_color dw  03h   ; player color
+player_size dw   05h   ; player dimensions 
+player_dir dw    00h   ; last direction of player (0 right, 1 down, 2 left, 3 up) 
+
 
 ; Walls ----------------------------------------------------------------------------------------------------
 walls_color dw 150h ; walls color 
@@ -97,8 +110,8 @@ gameLoop:                           ; Ciclo principal del juego
 
     ;call checkKeys ; function to check whether the keys have been clicked or not  
 
-    ;call renderPlayer ; function to draw the player
-    call renderWalls ; function to draw the walls
+    call renderPlayer ; function to draw the player
+    ;call renderWalls ; function to draw the walls
 
     ;call renderTextHints ; function to draw the hints for keyboard use
 
@@ -285,6 +298,35 @@ setLevel1:                          ; Funcion encargada de iniciar el primer niv
 
 
 ; Funcion encargada de retornar --------------------------------------------------
+
+; Render player  **************************************************************************************
+
+renderPlayer:
+    mov     cx, [player_x]            ; Posicion inicial x del alien
+    mov     dx, [player_y]            ; Posicion inicial y del alien
+    jmp     renderPlayerAux           ; Salta a la funcion auxliar
+
+renderPlayerAux:
+    mov     ah, 0ch                 ; Draw pixel
+    mov     al, [player_color]      ; player color 
+    mov     bh, 00h                 ; Page
+    int     10h                     ; Interrupt 
+    inc     cx                      ; cx +1
+    mov     ax, cx                  
+    sub     ax, [player_x]          ; Substract player width with the current column
+    cmp     ax, [player_size]       ; compares if ax is greater than player size
+    jng     renderPlayerAux         ; if not greater, draw next column
+    jmp     renderPlayerAux2        ; Else, jump to next aux function
+
+renderPlayerAux2:
+    mov     cx, [player_x]            ; reset columns
+    inc     dx                      ; dx +1
+    mov     ax, dx                  
+    sub     ax, [player_y]            ; Substract player height with the current row
+    cmp     ax, [player_size]            ; compares if ax is greater than player size
+    jng     renderPlayerAux            ; if not greater, draw next row
+    ret                             ; Else, return
+
 
 exitRoutine:                        ; Funcion encargada de retornar
     ret                             ; Retornar
