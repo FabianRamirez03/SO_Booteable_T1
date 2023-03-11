@@ -16,7 +16,7 @@ width dw  140h                      ; screen width 320 p
 height dw  0c8h                     ; screen height 200 p
 
 gameHeight dw 8ch ; Board height set to 100p
-gameWidth dw 096h ; Board width set to 150p
+gameWidth dw 8ch ; Board width set to 150p
 
 gamePaused dw 00h ; Flag to know if the game is paused
 
@@ -26,9 +26,9 @@ player_x dw      05h   ; x position player
 player_y dw      05h   ; y position player 
 temp_player_x dw 05h   ; temp x position player
 temp_player_y dw 05h   ; temp y position player
-player_speed dw  06h   ; player speed
+player_speed dw  05h   ; player speed
 player_color dw  03h   ; player color
-player_size dw   05h   ; player dimensions 
+player_size dw   06h   ; player dimensions 
 player_dir dw    00h   ; last direction of player (0 right, 1 down, 2 left, 3 up) 
 
 
@@ -39,13 +39,13 @@ walls_index dw 00h ; walls counter
 wallx dw 00h ; x wall pos
 wally dw 00h ; y wall pos
 
-walls_x_start_l1  dw 05h, 0fh, 14h ; Walls's X positions for L1
-walls_y_start_l1  dw 05h, 05h, 05h ; Y positions for L1
+walls_x_start_l1  dw 12h, 42h, 48h, 05h, 2fh, 35h ; Walls's X positions for L1
+walls_y_start_l1  dw 01h, 07h, 2bh, 0fh, 15h, 39h ; Y positions for L1
 
-walls_x_end_l1    dw 0ah, 14h, 2bh ; Walls's X positions for L1
-walls_y_end_l1    dw 50h, 50h, 0ah ; Number of walls for L1
+walls_x_end_l1    dw 47h, 47h, 59h, 34h, 34h, 58h ; Walls's X positions for L1
+walls_y_end_l1    dw 06h, 30h, 30h, 14h, 3eh, 3eh ; Number of walls for L1
 
-total_walls_lvl_1 dw 03h  
+total_walls_lvl_1 dw 06h  
 
 walls_x times 3 dw 00h ; current walls positions
 walls_y times 3 dw 00h ; current walls positions
