@@ -38,12 +38,12 @@ walls_size  dw 0ah ; walls width and height set 6p
 walls_index dw 00h ; walls counter
 
 ;walls starting coordinates
-walls_x_start_l1  dw 05h, 00h ; Walls's X positions for L1
-walls_y_start_l1  dw 0fh, 12h; Y positions for L1
+walls_x_start_l1  dw 05h; 00h ; Walls's X positions for L1
+walls_y_start_l1  dw 0fh; 12h; Y positions for L1
 
 ;walls ending coordinates
-walls_x_end_l1    dw 34h,47h ; Walls's X positions for L1
-walls_y_end_l1    dw 14h, 06h; Number of walls for L1
+walls_x_end_l1    dw 34h;47h ; Walls's X positions for L1
+walls_y_end_l1    dw 14h; 06h; Number of walls for L1
 
 ;current wall to draw coordinates
 wallXstart   dw 00h
@@ -120,7 +120,7 @@ gameLoop:                           ; Ciclo principal del juego
     call checkPlayerGameInput       ; function to check whether the keys have been clicked or not  
 
     call renderPlayer               ; function to draw the player
-    call renderWalls               ; function to draw the walls
+    call wallsOffset               ; function to draw the walls
 
     ;call renderTextHints           ; function to draw the hints for keyboard use
 
@@ -424,7 +424,7 @@ playerLeft:                         ; Moves player left
 wallsOffset:
     mov    bx, [wall_counter]           ;starts counting walls in game drawn
     cmp    bx, [total_walls_lvl_1]      ;compares to see if all lvl walls are drawn
-    jne    wallsOffset_Aux
+    jle    wallsOffset_Aux
     ret
 
 wallsOffset_Aux:
@@ -437,11 +437,16 @@ wallsOffset_Aux:
 
     mov    ax, walls_x_end_l1           ;loads walls x address
     add    ax, bx                       ;applies the offset to the walls x starting pixel
-    mov    [wallXend], ax             ;loads the value with offset in X
+    mov    [wallXend], ax               ;loads the value with offset in X
     mov    cx, walls_y_end_l1           ;loads walls y address
     add    cx, bx                       ;applies the offset to the walls y starting pixel
-    mov    [wallYend], cx             ;loads the value with offset in Y
-    
+    mov    [wallYend], cx               ;loads the value with offset in Y
+    call   renderWalls
+    mov    ax, wall_counter             ;increments the offset
+    add    ax, 1
+    mov    [wall_counter], ax
+    jmp    wallsOffset
+
 
 
 ; Render walls
@@ -453,8 +458,8 @@ renderWalls:
     jmp    renderWallsLvl2              ;else goes to lvl 2 map
 
 renderWallsLvl1:
-    mov     cx, [walls_x_start_l1]     ;loads first wall x coodrdinate in cx     
-    mov     dx, [walls_y_start_l1]     ;loads first wall y coordinate in dx
+    mov     cx, [wallXstart]     ;loads first wall x coodrdinate in cx     
+    mov     dx, [wallYstart]     ;loads first wall y coordinate in dx
     jmp     renderWallsLvl1Aux
 
 renderWallsLvl1Aux:
@@ -465,16 +470,16 @@ renderWallsLvl1Aux:
     int     10h                        ; Interrupt 
     inc     cx                         ; cx + 1 to increment the pixels in x
     mov     ax, cx
-    cmp     ax, [walls_x_end_l1]       ; compares if ax is greater than the end of the wall in x
+    cmp     ax, [wallXend]             ; compares if ax is greater than the end of the wall in x
     jng     renderWallsLvl1Aux         ; if not greater, draw next wall
     jmp     renderWallsLvl1Aux2        ; Else, jump to next aux function
 
 
 renderWallsLvl1Aux2:
-    mov     cx, [walls_x_start_l1]     ; reset columns
+    mov     cx, [wallXstart]     ; reset columns
     inc     dx                         ; dx +1
     mov     ax, dx                  
-    cmp     ax, [walls_y_end_l1]       ; compares if ax is at the y limit of the wall
+    cmp     ax, [wallYend]       ; compares if ax is at the y limit of the wall
     jng     renderWallsLvl1Aux         ; if not greater, draw next row
     ret                                ; Else, return
 
