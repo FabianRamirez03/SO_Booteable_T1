@@ -434,7 +434,7 @@ renderWallsLvl1Aux:
 
     int     10h                        ; Interrupt 
     inc     cx                         ; cx +1
-    mov    ax, cx
+    mov     ax, cx
     cmp     ax, [walls_x_end_l1]       ; compares if ax is greater than player size
     jng     renderWallsLvl1Aux         ; if not greater, draw next column
     jmp     renderWallsLvl1Aux2        ; Else, jump to next aux function
