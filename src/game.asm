@@ -22,13 +22,13 @@ gamePaused dw 00h ; Flag to know if the game is paused
 
 ; player
 
-player_x dw      05h   ; x position player 
-player_y dw      05h   ; y position player 
-temp_player_x dw 05h   ; temp x position player
-temp_player_y dw 05h   ; temp y position player
-player_speed dw  05h   ; player speed
+player_x dw      09h   ; x position player 
+player_y dw      10h   ; y position player 
+temp_player_x dw 09h   ; temp x position player
+temp_player_y dw 10h   ; temp y position player
+player_speed dw  06h   ; player speed
 player_color dw  03h   ; player color
-player_size dw   06h   ; player dimensions 
+player_size dw   05h   ; player dimensions 
 player_dir dw    00h   ; last direction of player (0 right, 1 down, 2 left, 3 up) 
 
 
@@ -39,11 +39,11 @@ walls_index dw 00h ; walls counter
 wallx dw 00h ; x wall pos
 wally dw 00h ; y wall pos
 
-walls_x_start_l1  dw 12h, 42h, 48h, 05h, 2fh, 35h ; Walls's X positions for L1
-walls_y_start_l1  dw 01h, 07h, 2bh, 0fh, 15h, 39h ; Y positions for L1
+walls_x_start_l1  dw 09h, 3fh, 45h, 09h, 33h, 39h ; Walls's X positions for L1
+walls_y_start_l1  dw 0ah, 10h, 34h, 16h, 1ch, 40h ; Y positions for L1
 
-walls_x_end_l1    dw 47h, 47h, 59h, 34h, 34h, 58h ; Walls's X positions for L1
-walls_y_end_l1    dw 06h, 30h, 30h, 14h, 3eh, 3eh ; Number of walls for L1
+walls_x_end_l1    dw 44h, 44h, 50h, 38h, 38h, 50h ; Walls's X positions for L1
+walls_y_end_l1    dw 0fh, 39h, 39h, 1bh, 45h, 45h ; Number of walls for L1
 
 total_walls_lvl_1 dw 06h  
 
@@ -244,11 +244,12 @@ setLevel1:                          ; Funcion encargada de iniciar el primer niv
     mov     ax, 01h                 ; Mueve 1 a ax
     mov     [level], ax             ; Mueve ax al nivel actual
 
-    mov     ax, 05h                       ; Mueve 5 a ax
-    mov     [player_x], ax                ; Mueve el 5 a la posicion inicial x del alien
-    mov     [player_y], ax                ; Mueve el 5 a la posicion inicial y del alien
-    mov     [temp_player_x], ax           ; Mueve el 5 a la posicion inicial temporal x del alien
-    mov     [temp_player_y], ax           ; Mueve el 5 a la posicion inicial temporal y del alien
+    mov     ax, 09h                       ; Mueve 09 a ax
+    mov     [player_x], ax                ; Mueve el 09 a la posicion inicial x del alien
+    mov     [temp_player_x], ax           ; Mueve el 09 a la posicion inicial temporal x del alien
+    mov     ax, 10h                       ; Mueve 10 a ax
+    mov     [player_y], ax                ; Mueve el 10 a la posicion inicial y del alien
+    mov     [temp_player_y], ax           ; Mueve el 10 a la posicion inicial temporal y del alien
 
     mov     ax, 00h                       ; Mueve 0 a ax
     mov     [gamePaused], ax              ; Mueve el contenido de ax a la variable de pausa
@@ -324,9 +325,9 @@ makeMovements:
     ret
 
 playerUp:                           ; Moves player up
-    mov     ax, 05h                 ; Moves 5 to ax
+    mov     ax, 06h                 ; Moves 5 to ax
     cmp     [player_y], ax          ; compares the player_y to the up border
-    je      exitRoutine             ; if equal, return. Dont move
+    jle      exitRoutine             ; if equal, return. Dont move
 
     call    deletePlayer            ; Deletes player from screen
 
@@ -348,9 +349,9 @@ playerUp:                           ; Moves player up
 
 playerDown:                         ; Moves player down
     mov     ax, [gameHeight]        ; Moves the game height to ax
-    add     ax, 05h                 ; add 5 to ax 
+    add     ax, 06h                 ; add 5 to ax 
     cmp     [player_y], ax          ; compares the player_y to the up border
-    je      exitRoutine             ; if equal, return. Dont move
+    jge      exitRoutine             ; if equal, return. Dont move
 
     call    deletePlayer            ; Deletes player from screen
 
@@ -371,9 +372,9 @@ playerDown:                         ; Moves player down
 
 playerRight:                        ; Moves player right
     mov     ax, [gameWidth]         ; Moves the game height to ax
-    add     ax, 05h                 ; add 5 to ax 
+    add     ax, 06h                 ; add 5 to ax 
     cmp     [player_x], ax          ; compares the player_y to the right border
-    je      exitRoutine             ; if equal, return. Dont move
+    jge      exitRoutine             ; if equal, return. Dont move
 
     call    deletePlayer            ; Deletes player from screen
 
@@ -393,9 +394,9 @@ playerRight:                        ; Moves player right
     ret                             ; return
 
 playerLeft:                         ; Moves player left
-    mov     ax, 05h                 ; Moves the game height to ax
+    mov     ax, 06h                 ; Moves the game height to ax
     cmp     [player_x], ax          ; compares the player_y to the right border
-    je      exitRoutine             ; if equal, return. Dont move
+    jle      exitRoutine             ; if equal, return. Dont move
 
     call    deletePlayer            ; Deletes player from screen
 
