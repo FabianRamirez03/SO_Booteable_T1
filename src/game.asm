@@ -38,12 +38,12 @@ walls_size  dw 0ah ; walls width and height set 6p
 walls_index dw 00h ; walls counter
 
 ;walls starting coordinates
-walls_x_start_l1  dw 05h; 00h ; Walls's X positions for L1
-walls_y_start_l1  dw 0fh; 12h; Y positions for L1
+walls_x_start_l1  dw 05h, 00h, 2fh ; Walls's X positions for L1
+walls_y_start_l1  dw 0fh, 12h, 15h; Y positions for L1
 
 ;walls ending coordinates
-walls_x_end_l1    dw 34h;47h ; Walls's X positions for L1
-walls_y_end_l1    dw 14h; 06h; Number of walls for L1
+walls_x_end_l1    dw 34h, 47h, 34h ; Walls's X positions for L1
+walls_y_end_l1    dw 14h, 06h, 3eh; Number of walls for L1
 
 ;current wall to draw coordinates
 wallXstart   dw 00h
@@ -422,29 +422,37 @@ playerLeft:                         ; Moves player left
 ;Function to iterate walls offset
 
 wallsOffset:
-    mov    bx, [wall_counter]           ;starts counting walls in game drawn
-    cmp    bx, [total_walls_lvl_1]      ;compares to see if all lvl walls are drawn
+    mov    ax, [wall_counter]           ;starts counting walls in game drawn
+    cmp    ax, [total_walls_lvl_1]      ;compares to see if all lvl walls are drawn
     jle    wallsOffset_Aux
     ret
 
 wallsOffset_Aux:
-    mov    ax, walls_x_start_l1         ;loads walls x address
-    add    ax, bx                       ;applies the offset to the walls x starting pixel
-    mov    [wallXstart], ax             ;loads the value with offset in X
-    mov    cx, walls_y_start_l1         ;loads walls y address
-    add    cx, bx                       ;applies the offset to the walls y starting pixel
+    mov    bx, walls_x_start_l1         ;loads walls x address
+    add    bx, ax                       ;applies the offset to the walls x starting pixel
+    mov    cx, [bx]
+    mov    [wallXstart], cx             ;loads the value with offset in X
+    
+    mov    bx, walls_y_start_l1         ;loads walls y address
+    add    bx, ax                       ;applies the offset to the walls y starting pixel
+    mov    cx, [bx]
     mov    [wallYstart], cx             ;loads the value with offset in Y
 
-    mov    ax, walls_x_end_l1           ;loads walls x address
-    add    ax, bx                       ;applies the offset to the walls x starting pixel
-    mov    [wallXend], ax               ;loads the value with offset in X
-    mov    cx, walls_y_end_l1           ;loads walls y address
-    add    cx, bx                       ;applies the offset to the walls y starting pixel
+    mov    bx, walls_x_end_l1           ;loads walls x address
+    add    bx, ax                       ;applies the offset to the walls x starting pixel
+    mov    cx, [bx]
+    mov    [wallXend], cx               ;loads the value with offset in X
+    
+    mov    bx, walls_y_end_l1           ;loads walls y address
+    add    bx, ax                       ;applies the offset to the walls y starting pixel
+    mov    cx, [bx]
     mov    [wallYend], cx               ;loads the value with offset in Y
+    
     call   renderWalls
-    mov    ax, wall_counter             ;increments the offset
-    add    ax, 1
-    mov    [wall_counter], ax
+    
+    mov    bx, [wall_counter]             ;increments the offset
+    add    bx, 2
+    mov    [wall_counter], bx
     jmp    wallsOffset
 
 
