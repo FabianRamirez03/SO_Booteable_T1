@@ -26,22 +26,26 @@ player_x dw      05h   ; x position player
 player_y dw      05h   ; y position player 
 temp_player_x dw 05h   ; temp x position player
 temp_player_y dw 05h   ; temp y position player
-player_speed dw  0ah   ; player speed
+player_speed dw  06h   ; player speed
 player_color dw  03h   ; player color
 player_size dw   05h   ; player dimensions 
 player_dir dw    00h   ; last direction of player (0 right, 1 down, 2 left, 3 up) 
 
 
 ; Walls ----------------------------------------------------------------------------------------------------
-walls_color dw 150h ; walls color 
+walls_color dw 09h ; walls color 
 walls_size  dw 0ah ; walls width and height set 6p
 walls_index dw 00h ; walls counter
 wallx dw 00h ; x wall pos
 wally dw 00h ; y wall pos
 
-walls_x_l1 dw 37h, 41h, 4bh ; Walls's X positions for L1
-walls_y_l1 dw 23h, 23h, 23bh ; Y positions for L1
-walls_n_l1 dw 03h ; Number of walls for L1
+walls_x_start_l1  dw 05h ; Walls's X positions for L1
+walls_y_start_l1  dw 05h ; Y positions for L1
+
+walls_x_end_l1    dw 0ah ; Walls's X positions for L1
+walls_y_end_l1    dw 50h ; Number of walls for L1
+
+total_walls_lvl_1 dw 01h  
 
 walls_x times 3 dw 00h ; current walls positions
 walls_y times 3 dw 00h ; current walls positions
@@ -112,70 +116,13 @@ gameLoop:                           ; Ciclo principal del juego
     call checkPlayerGameInput       ; function to check whether the keys have been clicked or not  
 
     call renderPlayer               ; function to draw the player
-    ;call renderWalls               ; function to draw the walls
+    call renderWalls               ; function to draw the walls
 
     ;call renderTextHints           ; function to draw the hints for keyboard use
 
     jmp     gameLoop                ; Salta al incio de la funcion
 
 ; Render functions **************************************************************************************
-
-renderWalls:
-    mov cx, [walls_index] ; loading the index to loop the walls
-    cmp cx, [walls_n] ; Comparing the counter with the number of walls
-    je exitWalls    ; if counter == walls_n : exit
-
-    mov ax, [walls_index] ; loading the walls index 
-    mov bx, [walls_x] ; loading first wall element in Walls X positions array
-    add bx, ax ; base_position + Index = current wall pointer
-    mov ax, [bx] ; X position for first wall
-    mov [walls_x], ax ; Store current X position
-    mov cx, [walls_x] ; Loads first wall position
-
-    mov ax, [walls_index] ; Loads walls index to AX
-
-    mov bx, walls_y ; loads first Y position pointer
-    add bx, ax ; base_Y_position + Index = current position
-    mov ax, [bx] ; loads first Y position
-    mov [walls_y], ax ; stores current Y position
-
-    jmp renderWalls_Aux
-
-renderWalls_Aux:
-    mov ah, 0ch ; Render pixel function
-    mov al, [walls_color] ; Walls color
-    mov bh, 00h ; Page
-    int 10h ; Execute interruption
-    inc cx ; Increments CX
-    mov ax, cx ; moves CX to AX
-    sub ax, [walls_x] ; WALL_WIDTH - CURRENT_COLUMN = TMP_RESULT
-    cmp ax, [walls_size] ; compares TMP_RESULT with wall width
-
-    jng renderWalls_Aux ; If not greater than 
-    jmp renderWalls_Aux2 ; else
-
-renderWalls_Aux2: 
-    mov cx, [walls_x] ; Reset number of columns
-    inc dx ; Increments DX
-    mov ax, dx ; moves DX to AX
-    sub ax, [walls_y] ; CURRENT_ROW - WALL_Y_POS = TMP_RESULT
-    cmp ax, [walls_size] ; compares TMP_RESULT with wall's height
-
-    jng renderWalls_Aux ; if not greater 
-    jmp renderWalls_Aux3 ; else
-
-renderWalls_Aux3:
-    mov cx, [walls_index] ; loads the walls index
-    add cx, 02h ; walls_index + 2
-    mov [walls_index], cs ; stores the new index
-
-    jmp renderWalls ; jumps to root render function
-
-exitWalls:
-    mov ax, 00h ; 
-    mov [walls_index], ax ; resets walls index
-
-    ret ; go back and continue the game loop.
 
 ;  Limpia el contenido que haya en la pantalla ----------------------------------------------------------
 
@@ -296,6 +243,15 @@ finishDraw:                         ; Funcion de salida de texto
 setLevel1:                          ; Funcion encargada de iniciar el primer nivel del juego
     mov     ax, 01h                 ; Mueve 1 a ax
     mov     [level], ax             ; Mueve ax al nivel actual
+
+    mov     ax, 05h                       ; Mueve 5 a ax
+    mov     [player_x], ax                ; Mueve el 5 a la posicion inicial x del alien
+    mov     [player_y], ax                ; Mueve el 5 a la posicion inicial y del alien
+    mov     [temp_player_x], ax           ; Mueve el 5 a la posicion inicial temporal x del alien
+    mov     [temp_player_y], ax           ; Mueve el 5 a la posicion inicial temporal y del alien
+
+    mov     ax, 00h                       ; Mueve 0 a ax
+    mov     [gamePaused], ax              ; Mueve el contenido de ax a la variable de pausa
 
 
 ; Funcion encargada de retornar --------------------------------------------------
@@ -458,6 +414,42 @@ playerLeft:                         ; Moves player left
 
     ret                             ; return
 
+; Render walls
+
+renderWalls:
+    mov    ax, 01h
+    cmp    ax, [level]
+    je     renderWallsLvl1
+    jmp    renderWallsLvl2
+
+renderWallsLvl1:
+    mov     cx, [walls_x_start_l1]            
+    mov     dx, [walls_y_start_l1]
+    jmp     renderWallsLvl1Aux
+
+renderWallsLvl1Aux:
+    mov     ah, 0ch                    ; Draw pixel
+    mov     al, [walls_color]          ; player color 
+    mov     bh, 00h                    ; Page
+
+    int     10h                        ; Interrupt 
+    inc     cx                         ; cx +1
+    mov    ax, cx
+    cmp     ax, [walls_x_end_l1]       ; compares if ax is greater than player size
+    jng     renderWallsLvl1Aux         ; if not greater, draw next column
+    jmp     renderWallsLvl1Aux2        ; Else, jump to next aux function
+
+
+renderWallsLvl1Aux2:
+    mov     cx, [walls_x_start_l1]            ; reset columns
+    inc     dx                                ; dx +1
+    mov     ax, dx                  
+    cmp     ax, [walls_y_end_l1]         ; compares if ax is greater than player size
+    jng     renderWallsLvl1Aux              ; if not greater, draw next row
+    ret                                  ; Else, return
+
+renderWallsLvl2:
+    ret
 
 
 exitRoutine:                        ; Funcion encargada de retornar
