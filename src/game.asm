@@ -39,13 +39,13 @@ walls_index dw 00h ; walls counter
 wallx dw 00h ; x wall pos
 wally dw 00h ; y wall pos
 
-walls_x_start_l1  dw 05h ; Walls's X positions for L1
-walls_y_start_l1  dw 05h ; Y positions for L1
+walls_x_start_l1  dw 05h, 0fh, 14h ; Walls's X positions for L1
+walls_y_start_l1  dw 05h, 05h, 05h ; Y positions for L1
 
-walls_x_end_l1    dw 0ah ; Walls's X positions for L1
-walls_y_end_l1    dw 50h ; Number of walls for L1
+walls_x_end_l1    dw 0ah, 14h, 2bh ; Walls's X positions for L1
+walls_y_end_l1    dw 50h, 50h, 0ah ; Number of walls for L1
 
-total_walls_lvl_1 dw 01h  
+total_walls_lvl_1 dw 03h  
 
 walls_x times 3 dw 00h ; current walls positions
 walls_y times 3 dw 00h ; current walls positions
@@ -419,34 +419,46 @@ playerLeft:                         ; Moves player left
 renderWalls:
     mov    ax, 01h
     cmp    ax, [level]
-    je     renderWallsLvl1
+    je     renderWallsLvl1Main
     jmp    renderWallsLvl2
 
-renderWallsLvl1:
-    mov     cx, [walls_x_start_l1]            
-    mov     dx, [walls_y_start_l1]
+renderWallsLvl1Main:
+    mov esi, 0 ; initialize i to 0
+    jmp renderWallsLvl1Loop
+
+renderWallsLvl1Loop:
+    cmp     esi, [total_walls_lvl_1]  ; Compara el contador i con el total de muros en el nivel 2
+    je      exitRoutine
+    mov     cx, [walls_x_start_l1 + 2*esi]            
+    mov     dx, [walls_y_start_l1 + 2*esi]
     jmp     renderWallsLvl1Aux
 
-renderWallsLvl1Aux:
-    mov     ah, 0ch                    ; Draw pixel
-    mov     al, [walls_color]          ; player color 
-    mov     bh, 00h                    ; Page
 
-    int     10h                        ; Interrupt 
-    inc     cx                         ; cx +1
-    mov     ax, cx
-    cmp     ax, [walls_x_end_l1]       ; compares if ax is greater than player size
-    jng     renderWallsLvl1Aux         ; if not greater, draw next column
-    jmp     renderWallsLvl1Aux2        ; Else, jump to next aux function
+renderWallsLvl1Aux:
+    mov     ah, 0ch                           ; Draw pixel
+    mov     al, [walls_color]                 ; player color 
+    mov     bh, 00h                           ; Page
+  
+    int     10h                               ; Interrupt 
+    inc     cx                                ; cx +1
+    mov     ax, cx                            ; mno
+    cmp     ax, [walls_x_end_l1 + 2*esi]      ; compares if ax is greater than the wall x limit 
+    jng     renderWallsLvl1Aux                ; if not greater, draw next column
+    jmp     renderWallsLvl1Aux2               ; Else, jump to next aux function
 
 
 renderWallsLvl1Aux2:
-    mov     cx, [walls_x_start_l1]            ; reset columns
+    mov     cx, [walls_x_start_l1 + 2*esi]    ; reset columns
     inc     dx                                ; dx +1
     mov     ax, dx                  
-    cmp     ax, [walls_y_end_l1]         ; compares if ax is greater than player size
-    jng     renderWallsLvl1Aux              ; if not greater, draw next row
-    ret                                  ; Else, return
+    cmp     ax, [walls_y_end_l1 + 2*esi]      ; compares if ax is greater than player size
+    jng     renderWallsLvl1Aux                ; if not greater, draw next row
+    jmp     renderWallsLvl1Aux3               ; Else, return
+
+renderWallsLvl1Aux3:
+    inc esi  ; +=1 to i counter of the walls 
+    jmp renderWallsLvl1Loop
+
 
 renderWallsLvl2:
     ret
