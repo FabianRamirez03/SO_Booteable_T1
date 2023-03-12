@@ -45,19 +45,19 @@ walls_y_start_l1  dw 0ah, 10h, 34h, 16h, 1ch, 40h, 00h ; Y positions for L1
 walls_x_end_l1    dw 44h, 44h, 50h, 38h, 38h, 50h, 14h ; Walls's X positions for L1
 walls_y_end_l1    dw 0fh, 39h, 39h, 1bh, 45h, 45h, 09h ; Number of walls for L1
 
-total_walls_lvl_1 dw 07h  
+total_walls_lvl_1 dd 07h  
 
-walls_n dw 00h ; current walls number
+
 
 ; Walls level 2 ----------------------------------------------------------------------------------------------------
 
-walls_x_start_l2  dw 13h, 19h, 25h, 2bh, 37h, 3dh, 5bh, 55h, 4fh, 37h, 37h, 31h, 1fh, 1fh, 07h, 07h, 0dh, 19h, 00h, 13h, 19h, 25h, 25h, 2bh, 43h, 49h, 4fh, 49h, 43h, 49h, 43h ; Walls's X positions for L2
-walls_y_start_l2  dw 01h, 07h, 0dh, 19h, 07h, 07h, 0dh, 43h, 49h, 4fh, 43h, 3dh, 43h, 49h, 4fh, 2bh, 2bh, 13h, 13h, 37h, 37h, 31h, 25h, 25h, 13h, 13h, 19h, 2bh, 37h, 3dh, 43h ; Walls's Y positions for L2
+walls_x_start_l2  dd 13h, 19h, 25h, 2bh, 37h, 3dh, 5bh, 55h, 4fh, 37h, 37h, 31h, 1fh, 1fh, 07h, 07h, 0dh, 19h, 00h, 13h, 19h, 25h, 25h, 2bh, 43h, 49h, 4fh, 49h, 43h, 49h, 43h ; Walls's X positions for L2
+walls_y_start_l2  dd 01h, 07h, 0dh, 19h, 07h, 07h, 0dh, 43h, 49h, 4fh, 43h, 3dh, 43h, 49h, 4fh, 2bh, 2bh, 13h, 13h, 37h, 37h, 31h, 25h, 25h, 13h, 13h, 19h, 2bh, 37h, 3dh, 43h ; Walls's Y positions for L2
 
-walls_x_end_l2    dw 18h, 2ah, 2ah, 3ch, 3ch, 60h, 60h, 5ah, 54h, 4eh, 3ch, 36h, 30h, 24h, 1eh, 0ch, 1eh, 1eh, 18h, 18h, 2ah, 42h, 2ah, 48h, 48h, 54h, 54h, 4eh, 48h, 4eh, 48h ; Walls's X positions for L1
-walls_y_end_l2    dw 0ch, 0ch, 1eh, 1eh, 18h, 0ch, 42h, 48h, 4eh, 54h, 4eh, 42h, 48h, 54h, 54h, 4eh, 30h, 2ah, 18h, 48h, 3ch, 36h, 30h, 2ah, 24h, 18h, 3ch, 30h, 3ch, 42h, 48h ; Number of walls for L1
+walls_x_end_l2    dd 18h, 2ah, 2ah, 3ch, 3ch, 60h, 60h, 5ah, 54h, 4eh, 3ch, 36h, 30h, 24h, 1eh, 0ch, 1eh, 1eh, 18h, 18h, 2ah, 42h, 2ah, 48h, 48h, 54h, 54h, 4eh, 48h, 4eh, 48h ; Walls's X positions for L1
+walls_y_end_l2    dd 0ch, 0ch, 1eh, 1eh, 18h, 0ch, 42h, 48h, 4eh, 54h, 4eh, 42h, 48h, 54h, 54h, 4eh, 30h, 2ah, 18h, 48h, 3ch, 36h, 30h, 2ah, 24h, 18h, 3ch, 30h, 3ch, 42h, 48h ; Number of walls for L1
 
-total_walls_lvl_2 dw 1fh  
+total_walls_lvl_2 dd 1fh  
 
 ; Goal ----------------------------------------------------------------------------------------------------
 
@@ -98,6 +98,11 @@ startGame:                          ; Funcion de inicio del juego
     call    renderGoal
     jmp     gameLoop                ; Salta a la funcion principal del programa
 
+startLevel2:
+    call    setLevel2
+    call    clearScreen
+    call    renderWalls             ; function to draw the walls
+    jmp     gameLoop
 
 ; Inicia el display que mostrara el contenido del juego
 initDisplay:
@@ -275,7 +280,22 @@ setLevel1:                          ; Funcion encargada de iniciar el primer niv
 
     mov     ax, 00h                       ; Mueve 0 a ax
     mov     [gamePaused], ax              ; Mueve el contenido de ax a la variable de pausa
+    ret
 
+setLevel2:                          ; Funcion encargada de iniciar el primer nivel del juego
+    mov     ax, 02h                 ; Mueve 1 a ax
+    mov     [level], ax             ; Mueve ax al nivel actual
+    
+    mov     ax, 07h                       ; Mueve 07 a ax
+    mov     [player_x], ax                ; Mueve el 07 a la posicion inicial x del alien
+    mov     [temp_player_x], ax           ; Mueve el 07 a la posicion inicial temporal x del alien
+    mov     ax, 07h                       ; Mueve 07 a ax
+    mov     [player_y], ax                ; Mueve el 07 a la posicion inicial y del alien
+    mov     [temp_player_y], ax           ; Mueve el 07 a la posicion inicial temporal y del alien
+
+    mov     ax, 00h                       ; Mueve 0 a ax
+    mov     [gamePaused], ax              ; Mueve el contenido de ax a la variable de pausa
+    ret
 
 ; Funcion encargada de retornar --------------------------------------------------
 
@@ -431,7 +451,7 @@ renderWalls:
     mov    ax, 01h
     cmp    ax, [level]
     je     renderWallsLvl1Main
-    jmp    renderWallsLvl2
+    jmp    renderWallsLvl2Main
 
 renderWallsLvl1Main:
     mov esi, 0 ; initialize i to 0
@@ -471,8 +491,46 @@ renderWallsLvl1Aux3:
     jmp renderWallsLvl1Loop
 
 
-renderWallsLvl2:
-    ret
+
+;-----------------------Render Walls Level 2 -------------------------------------------------
+
+renderWallsLvl2Main:
+    mov esi, 0                 ; initialize i to 0
+    jmp renderWallsLvl2Loop
+
+renderWallsLvl2Loop:
+    cmp     esi, [total_walls_lvl_2]  ; Compara el contador i con el total de muros en el nivel 2
+    je      exitRoutine
+    mov     cx, [walls_x_start_l2 + 4*esi]            
+    mov     dx, [walls_y_start_l2 + 4*esi]
+    jmp     renderWallsLvl2Aux
+
+
+renderWallsLvl2Aux:
+    mov     ah, 0ch                           ; Draw pixel
+    mov     al, [walls_color]                 ; player color 
+    mov     bh, 00h                           ; Page
+  
+    int     10h                               ; Interrupt 
+    inc     cx                                ; cx +1
+    mov     ax, cx                            ; mno
+    cmp     ax, [walls_x_end_l2 + 4*esi]      ; compares if ax is greater than the wall x limit 
+    jng     renderWallsLvl2Aux                ; if not greater, draw next column
+    jmp     renderWallsLvl2Aux2               ; Else, jump to next aux function
+
+
+renderWallsLvl2Aux2:
+    mov     cx, [walls_x_start_l2 + 4*esi]    ; reset columns
+    inc     dx                                ; dx +1
+    mov     ax, dx                  
+    cmp     ax, [walls_y_end_l2 + 4*esi]      ; compares if ax is greater than player size
+    jng     renderWallsLvl2Aux                ; if not greater, draw next row
+    jmp     renderWallsLvl2Aux3               ; Else, return
+
+renderWallsLvl2Aux3:
+    inc esi  ; +=1 to i counter of the walls 
+    jmp renderWallsLvl2Loop
+
 
 ;-----------------------Render Goal-------------------------------------------------
 
@@ -532,6 +590,9 @@ checkPlayerColision:
 
     cmp al, [walls_color]
     je exitPlayerMovement
+
+    cmp al, [goal_color]
+    je startLevel2
 
     pop ax
 
