@@ -22,26 +22,67 @@ player_ytmp dw 10h ; Temporal Player Y Pos
 
 ; Constantes -----------------------------------------------------------------------------------------------
 
-width dw  140h                      ; Ancho de la pantalla 320 p
-height dw  0c8h                     ; Alto de la pantalla 200 p
+width dw  140h                      ; screen width 320 p
+height dw  0c8h                     ; screen height 200 p
 
 gameHeight dw 8ch ; Board height set to 100p
-gameWidth dw 096h ; Board width set to 150p
+gameWidth dw 8ch ; Board width set to 150p
+
+gamePaused dw 00h ; Flag to know if the game is paused. 0 not paused. 1 paused
+
+; player
+
+player_x dw      03h   ; x position player 
+player_y dw      0ah   ; y position player 
+temp_player_x dw 03h   ; temp x position player
+temp_player_y dw 0ah   ; temp y position player
+player_speed dw  06h   ; player speed
+player_color dw  03h   ; player color
+player_size dw   05h   ; player dimensions 
+player_dir dw    00h   ; last direction of player (0 right, 1 down, 2 left, 3 up) 
+
 
 ; Walls ----------------------------------------------------------------------------------------------------
-walls_color dw 150h ; walls color 
+walls_color dw 09h ; walls color 
 walls_size  dw 0ah ; walls width and height set 6p
 walls_index dw 00h ; walls counter
 wallx dw 00h ; x wall pos
 wally dw 00h ; y wall pos
 
-walls_x_l1 dw 37h, 41h, 4bh ; Walls's X positions for L1
-walls_y_l1 dw 23h, 23h, 23bh ; Y positions for L1
-walls_n_l1 dw 03h ; Number of walls for L1
+walls_x_start_l1  dd 0fh, 3fh, 45h, 00h, 33h, 39h, 0fh ; Walls's X positions for L1
+walls_y_start_l1  dd 0ah, 10h, 34h, 16h, 1ch, 40h, 00h ; Y positions for L1
 
-walls_x times 3 dw 00h ; current walls positions
-walls_y times 3 dw 00h ; current walls positions
-walls_n dw 00h ; current walls number
+walls_x_end_l1    dd 44h, 44h, 50h, 38h, 38h, 50h, 14h ; Walls's X positions for L1
+walls_y_end_l1    dd 0fh, 39h, 39h, 1bh, 45h, 45h, 09h ; Number of walls for L1
+
+total_walls_lvl_1 dd 07h  
+
+
+
+; Walls level 2 ----------------------------------------------------------------------------------------------------
+
+walls_x_start_l2  dd 13h, 19h, 25h, 2bh, 37h, 3dh, 5bh, 55h, 4fh, 37h, 37h, 31h, 1fh, 1fh, 07h, 07h, 0dh, 19h, 00h, 13h, 19h, 25h, 25h, 2bh, 43h, 49h, 4fh, 49h, 43h, 49h, 43h ; Walls's X positions for L2
+walls_y_start_l2  dd 01h, 07h, 0dh, 19h, 07h, 07h, 0dh, 43h, 49h, 4fh, 43h, 3dh, 43h, 49h, 4fh, 2bh, 2bh, 13h, 13h, 37h, 37h, 31h, 25h, 25h, 13h, 13h, 19h, 2bh, 37h, 3dh, 43h ; Walls's Y positions for L2
+
+walls_x_end_l2    dd 18h, 2ah, 2ah, 3ch, 3ch, 60h, 60h, 5ah, 54h, 4eh, 3ch, 36h, 30h, 24h, 1eh, 0ch, 1eh, 1eh, 18h, 18h, 2ah, 42h, 2ah, 48h, 48h, 54h, 54h, 4eh, 48h, 4eh, 48h ; Walls's X positions for L1
+walls_y_end_l2    dd 0ch, 0ch, 1eh, 1eh, 18h, 0ch, 42h, 48h, 4eh, 54h, 4eh, 42h, 48h, 54h, 54h, 4eh, 30h, 2ah, 18h, 48h, 3ch, 36h, 30h, 2ah, 24h, 18h, 3ch, 30h, 3ch, 42h, 48h ; Number of walls for L1
+
+total_walls_lvl_2 dd 1fh  
+
+; Goal ----------------------------------------------------------------------------------------------------
+
+goal_x           dw      4bh       ; x goal for current Level  
+goal_y           dw      3ah       ; y goal for current Level   
+
+goal_level_1_x   dw      4bh       ; x goal level 1  
+goal_level_1_y   dw      3ah       ; y goal level 1  
+
+goal_level_2_x   dw      3dh       ; x goal level 2  
+goal_level_2_y   dw      3dh       ; y goal level 2  
+
+goal_color       dw      04h       ; goal color
+
+
 
 ; Texts ---------------------------------------------------------------------------------------------------
 
@@ -50,6 +91,13 @@ menuTitle dw '            MOBILE MAZE             ', 0h
 menuWelc  dw '            BIENVENIDO              ', 0h
 menuDeco2 dw '************************************', 0h
 menuSpace dw '   Presione ESPACIO para continuar  ', 0h
+
+winnerDeco1 dw '************************************', 0h
+winnerTitle dw '            FELICIDADES             ', 0h
+winnerWelc  dw '              GANASTE               ', 0h
+winnerDeco2 dw '************************************', 0h
+winnerSpace dw '   Presione ESPACIO para repetir    ', 0h
+
 
 textColor     dw 150h
 
@@ -66,8 +114,16 @@ startProgram:
 startGame:                          ; Funcion de inicio del juego
     call    setLevel1               ; Llama a la funcion para colocar los parametros del primer nivel
     call    clearScreen             ; Llama a la funcion para limpiar la pantalla
+    call    renderWalls             ; function to draw the walls
+    call    renderGoal
     jmp     gameLoop                ; Salta a la funcion principal del programa
 
+startLevel2:
+    call    setLevel2
+    call    clearScreen
+    call    renderWalls             ; function to draw the walls
+    call    renderGoal
+    jmp     gameLoop
 
 ; Inicia el display que mostrara el contenido del juego
 initDisplay:
@@ -93,85 +149,43 @@ menuLoop:                           ; Ciclo principal del menu de bienvenida
 
     jmp     menuLoop                ; Salta al incio de la funcion
 
+winnerLoop:
+    mov     ah, 00h                 ; Activa obtener el tiempo de la computadora
+    int     1ah                     ; Ejecutar interrupcion
+
+    cmp     dl, [time]              ; Compara el tiempo actual con el tiempo anterior
+    je      winnerLoop              ; Si son iguales vuelve a calcular el ciclo
+    mov     [time], dl              ; Sino, almacena el nuevo tiempo
+    
+    call    checkPlayerMenuAction   ; Llama la funcion encargada de verificar teclas en el menu principal
+    
+    call    drawWinnerMenu          ; Llama a la funcion encargada de escribir texto del menu
+
+    jmp     winnerLoop              ; Salta al incio de la funcion
+
+
 ; Loop principal del juego 
 
 gameLoop:                           ; Ciclo principal del juego
     mov     ah, 00h                 ; Activa obtener el tiempo de la computadora
     int     1ah                     ; Ejecutar interrupcion
 
-    call clearScreen
+    ;call clearScreen
 
     cmp     dl, [time]              ; Compara el tiempo actual con el tiempo anterior
     je      gameLoop                ; Si son iguales vuelve a calcular el ciclo
     mov     [time], dl              ; Sino, almacena el nuevo tiempo
 
-    ;call checkKeys ; function to check whether the keys have been clicked or not  
+    call checkPlayerGameInput       ; function to check whether the keys have been clicked or not  
 
-    ;call renderPlayer ; function to draw the player
-    call renderWalls ; function to draw the walls
+    call renderPlayer               ; function to draw the player
+   
 
-    ;call renderTextHints ; function to draw the hints for keyboard use
+    ;call renderTextHints           ; function to draw the hints for keyboard use
 
     jmp     gameLoop                ; Salta al incio de la funcion
 
 ; Render functions **************************************************************************************
-
-renderWalls:
-    mov cx, [walls_index] ; loading the index to loop the walls
-    cmp cx, [walls_n] ; Comparing the counter with the number of walls
-    je exitWalls    ; if counter == walls_n : exit
-
-    mov ax, [walls_index] ; loading the walls index 
-    mov bx, [walls_x] ; loading first wall element in Walls X positions array
-    add bx, ax ; base_position + Index = current wall pointer
-    mov ax, [bx] ; X position for first wall
-    mov [walls_x], ax ; Store current X position
-    mov cx, [walls_x] ; Loads first wall position
-
-    mov ax, [walls_index] ; Loads walls index to AX
-
-    mov bx, walls_y ; loads first Y position pointer
-    add bx, ax ; base_Y_position + Index = current position
-    mov ax, [bx] ; loads first Y position
-    mov [walls_y], ax ; stores current Y position
-
-    jmp renderWalls_Aux
-
-renderWalls_Aux:
-    mov ah, 0ch ; Render pixel function
-    mov al, [walls_color] ; Walls color
-    mov bh, 00h ; Page
-    int 10h ; Execute interruption
-    inc cx ; Increments CX
-    mov ax, cx ; moves CX to AX
-    sub ax, [walls_x] ; WALL_WIDTH - CURRENT_COLUMN = TMP_RESULT
-    cmp ax, [walls_size] ; compares TMP_RESULT with wall width
-
-    jng renderWalls_Aux ; If not greater than 
-    jmp renderWalls_Aux2 ; else
-
-renderWalls_Aux2: 
-    mov cx, [walls_x] ; Reset number of columns
-    inc dx ; Increments DX
-    mov ax, dx ; moves DX to AX
-    sub ax, [walls_y] ; CURRENT_ROW - WALL_Y_POS = TMP_RESULT
-    cmp ax, [walls_size] ; compares TMP_RESULT with wall's height
-
-    jng renderWalls_Aux ; if not greater 
-    jmp renderWalls_Aux3 ; else
-
-renderWalls_Aux3:
-    mov cx, [walls_index] ; loads the walls index
-    add cx, 02h ; walls_index + 2
-    mov [walls_index], cs ; stores the new index
-
-    jmp renderWalls ; jumps to root render function
-
-exitWalls:
-    mov ax, 00h ; 
-    mov [walls_index], ax ; resets walls index
-
-    ret ; go back and continue the game loop.
 
 ;  Limpia el contenido que haya en la pantalla ----------------------------------------------------------
 
@@ -257,6 +271,46 @@ drawTextMenu:                       ; Funcion encargada de escribir los textos d
 
     ret
 
+drawWinnerMenu:                     ; Funcion encargada de escribir los textos del menu de bienvenida
+    mov     bx, [textColor]         ; Mueve a bx el color del texto
+    mov     [textColor], bx         ; Almacena el nuevo bx al color del texto
+
+    ; Elemento decorativo de la pantalla de bienvenida
+    mov     bx, winnerDeco1         ; Mueve a bx el puntero del primer texto
+    mov     dh, 07h                 ; Mueve a dh un 7
+    mov     dl, 02h                 ; Mueve a dl un 2
+    call    drawText                ; Llama a la funcion encargada de escribir texto
+
+    ; Titulo de la pantalla de bienvenida
+    mov     bx, winnerTitle         ; Mueve a bx el puntero del segundo texto
+    inc     dh                      ; Incrementa dh
+    inc     dh                      ; Incrementa dh
+    mov     dl, 02h                 ; Mueve a dl un 2
+    call    drawText                ; Llama a la funcion encargada de escribir texto
+
+    ; Texto de bienvenida de la pantalla de bienvenida
+    mov     bx, winnerWelc          ; Mueve a bx el puntero del tercer texto
+    inc     dh                      ; Incrementa dh
+    mov     dl, 02h                 ; Mueve a dl un 2
+    call    drawText                ; Llama a la funcion encargada de escribir texto
+
+    ; Elemento decorativo de la pantalla de bienvenida
+    mov     bx, winnerDeco2         ; Mueve a bx el puntero del cuarto texto
+    inc     dh                      ; Incrementa dh
+    inc     dh                      ; Incrementa dh
+    mov     dl, 02h                 ; Mueve a dl un 2
+    call    drawText                ; Llama a la funcion encargada de escribir texto
+
+    ; Texto para indicarle al usuario que presione espacio de la pantalla de bienvenida
+    mov     bx, winnerSpace         ; Mueve a bx el puntero del quinta texto
+    inc     dh                      ; Incrementa dh
+    inc     dh                      ; Incrementa dh
+    inc     dh                      ; Incrementa dh
+    mov     dl, 02h                 ; Mueve a dl un 2
+    call    drawText                ; Llama a la funcion encargada de escribir texto
+
+    ret
+
 ; Funcion encargada de dibujar el texto en pantalla --------------------------------------------------
 
 drawText:                           ; Funcion encargada de dibujar texto
@@ -293,58 +347,398 @@ setLevel1:                          ; Funcion encargada de iniciar el primer niv
     mov     ax, 01h                 ; Mueve 1 a ax
     mov     [level], ax             ; Mueve ax al nivel actual
 
-    mov ax, 0ah ; This will be the margin and initial pos
-    mov [player_x], ax ; sets ax as initial X position
-    mov [player_y], ax ; sets ax as intial Y position
-    mov [player_xtmp], ax ; set ax as initial X tmp position
-    mov [player_ytmp], ax ; sets ax as initial Y tmp position
+    mov     ax, 03h                       ; Mueve 09 a ax
+    mov     [player_x], ax                ; Mueve el 09 a la posicion inicial x del alien
+    mov     [temp_player_x], ax           ; Mueve el 09 a la posicion inicial temporal x del alien
+    mov     ax, 0ah                       ; Mueve 10 a ax
+    mov     [player_y], ax                ; Mueve el 10 a la posicion inicial y del alien
+    mov     [temp_player_y], ax           ; Mueve el 10 a la posicion inicial temporal y del alien
 
-    mov ax, [walls_n_l1] ; Number of walls for Level 1.
-    mov [walls_n], ax ; Stores the walls number during the game
-    mov cx, 00h ; resets CX, this is our counter for the walls rendering process
-    jmp setLevel1_Aux
+    mov     ax, 00h                       ; Mueve 0 a ax
+    mov     [gamePaused], ax              ; Mueve el contenido de ax a la variable de pausa
+    ret
 
-setLevel1_Aux: ; This iterates the X positions of the wall
-    cmp cx, [walls_n] ; walls_counter == walls_total
-    je setLevel1_Aux2 ; 
-    mov bx, walls_x_l1 ; Pointer to all the x positions for the walls in L1
-    add bx, cx ; moves the pointer to the next wall to render
-    mov ax, [bx] ; AX stores the current X position
-    mov bx, walls_x ; resets bx to the pointer of current walls x positions array
-    add bx, cx ; moves bx by cx times 
-    mov [bx], ax ; stores bx pointer in AX
-    add cx, 2 ; CX + 2
-    jmp setLevel_Aux
-
-
-setLevel1_Aux2: ; This iterates the Y position of the wall
-    mov cx, 00h ; resets CX
-    jmp setLevel1_Aux3 
+setLevel2:                          ; Funcion encargada de iniciar el primer nivel del juego
+    mov     ax, 02h                 ; Mueve 1 a ax
+    mov     [level], ax             ; Mueve ax al nivel actual
     
+    mov     ax, 07h                       ; Mueve 07 a ax
+    mov     [player_x], ax                ; Mueve el 07 a la posicion inicial x del alien
+    mov     [temp_player_x], ax           ; Mueve el 07 a la posicion inicial temporal x del alien
+    mov     ax, 07h                       ; Mueve 07 a ax
+    mov     [player_y], ax                ; Mueve el 07 a la posicion inicial y del alien
+    mov     [temp_player_y], ax           ; Mueve el 07 a la posicion inicial temporal y del alien
 
-setLevel1_Aux3:
-    cmp cx, [walls_n] ; counter_walls == walls_total
-    je setLevel1_Aux4 
-    mov bx, walls_y_l1 ; move the Y position pointer to BX
-    mov bx, cx ; moves the Y position to the current wall 
-    mov ax, [bx] ; moves current wall pos to AX
-    mov bx, walls_y ; moves on-game walls pointer to BX
-    add bx, cx ; moves the pointer to the current wall
-    mov [bx], ax ; stores AX in the BX pointer
-    add cx, 2 ; CX + 2
-    jmp setLevel1_Aux3 ; Go back to the loop
-
-
-setLevel1_Aux4: ; This iterates the Y position of the wall
-    mov cx, 00h ; resets CX
-    jmp setLevel1_Aux5
-
-setLevel1_Aux5:
-    ;;;;Quede aqui
-
-
+    mov     ax, 00h                       ; Mueve 0 a ax
+    mov     [gamePaused], ax              ; Mueve el contenido de ax a la variable de pausa
+    ret
 
 ; Funcion encargada de retornar --------------------------------------------------
+
+; Render player  **************************************************************************************
+
+renderPlayer:
+    mov     cx, [player_x]            ; Posicion inicial x del alien
+    mov     dx, [player_y]            ; Posicion inicial y del alien
+    jmp     renderPlayerAux           ; Salta a la funcion auxliar
+
+renderPlayerAux:
+    mov     ah, 0ch                 ; Draw pixel
+    mov     al, [player_color]      ; player color 
+    mov     bh, 00h                 ; Page
+    int     10h                     ; Interrupt 
+    inc     cx                      ; cx +1
+    mov     ax, cx                  
+    sub     ax, [player_x]          ; Substract player width with the current column
+    cmp     ax, [player_size]       ; compares if ax is greater than player size
+    jng     renderPlayerAux         ; if not greater, draw next column
+    jmp     renderPlayerAux2        ; Else, jump to next aux function
+
+renderPlayerAux2:
+    mov     cx, [player_x]            ; reset columns
+    inc     dx                        ; dx +1
+    mov     ax, dx                  
+    sub     ax, [player_y]            ; Substract player height with the current row
+    cmp     ax, [player_size]         ; compares if ax is greater than player size
+    jng     renderPlayerAux           ; if not greater, draw next row
+    ret                               ; Else, return
+
+
+deletePlayer:                       ; Funtion to erase player from screen
+    mov     al, 00h                 ; Move color black to al
+    mov     [player_color], al      ; Updates player color to black 
+    call    renderPlayer            ; Render player in color black
+    mov     al, 03h                 ; Set al as the original player color
+    mov     [player_color], al      ; Updates player color to black
+    ret                             ; return
+
+
+; Checks player inputs -----------------------------------------------------------------------------------------------------------
+
+checkPlayerGameInput:
+    mov     ax, 00h                   ; Reset reg ax
+    cmp     ax, [gamePaused]           ; move the gamePaused Flag to ax
+    je      makeMovements             ; If the game is not paused, player can move 
+    jmp     checkPlayerPauseInput   ; If the game is paused, checks if the input is to unpaused the game
+
+
+makeMovements:
+    mov     ah, 01h                 ; gets keyboard status
+    int     16h                     ; interrupt 
+
+    jz      exitRoutine             ; if not pushed key, exit
+
+    mov     ah, 00h                 ; Read key
+    int     16h                     ; interrupt
+
+    cmp     ah, 48h                 ; If the key pushed is arrow up
+    je      playerUp                ; Moves player up
+    
+    cmp     ah, 50h                 ; If the key pushed is arrow down
+    je      playerDown              ; Moves player down
+
+    cmp     ah, 4dh                 ; If the key pushed is arrow right 
+    je      playerRight             ; Moves player right
+
+    cmp     ah, 4bh                 ; If the key pushed is arrow left 
+    je      playerLeft              ; Moves player left
+
+    cmp     ah, 13h                 ; If the key pushed is r
+    je      resetGame               ; Resets game
+
+    cmp     ah, 72h                 ; If the key pushed is R
+    je      resetGame               ; Resets game
+
+    cmp     ah, 26h                 ; If the key pushed is l
+    je      pauseGame               ; Pause the game
+
+    cmp     ah, 6ch                 ; If the key pushed is L
+    je      pauseGame               ; Pause the game
+
+    ret
+
+playerUp:                           ; Moves player up
+    mov     ax, 06h                 ; Moves 6 to ax
+    cmp     [player_y], ax          ; compares the player_y to the up border
+    jle      exitRoutine             ; if equal, return. Dont move
+
+    call    deletePlayer            ; Deletes player from screen
+
+    mov     ax, [player_y]          ; Mueve la posicion y del alien a ax
+    sub     ax, [player_speed]      ; Resta la velocidad del alien a ax
+    mov     [temp_player_y], ax     ; Almacena la nueva posicion en una variable temporal
+    
+    call    checkPlayerColision     ; Llama a la funcion para detectar colisiones del alien
+
+    mov     [player_y], ax            ; Updates pos y of player
+
+
+    ret                             ; return
+
+
+playerDown:                         ; Moves player down
+    mov     ax, [gameHeight]        ; Moves the game height to ax
+    add     ax, 06h                 ; add 6 to ax 
+    cmp     [player_y], ax          ; compares the player_y to the up border
+    jge      exitRoutine             ; if equal, return. Dont move
+
+    call    deletePlayer            ; Deletes player from screen
+
+    mov     ax, [player_y]          ; Mueve la posicion y del alien a ax
+    add     ax, [player_speed]      ; Resta la velocidad del alien a ax
+    mov     [temp_player_y], ax     ; Almacena la nueva posicion en una variable temporal
+    call    checkPlayerColision     ; Llama a la funcion para detectar colisiones del alien
+
+    mov     [player_y], ax            ; Updates pos y of player
+
+    ret                             ; return
+
+playerRight:                        ; Moves player right
+    mov     ax, [gameWidth]         ; Moves the game height to ax
+    add     ax, 06h                 ; add 5 to ax 
+    cmp     [player_x], ax          ; compares the player_y to the right border
+    jge      exitRoutine             ; if equal, return. Dont move
+
+    call    deletePlayer            ; Deletes player from screen
+
+    mov     ax, [player_x]          ; Mueve la posicion x del alien a ax
+    add     ax, [player_speed]      ; Resta la velocidad del alien a ax
+    mov     [temp_player_x], ax     ; Almacena la nueva posicion en una variable temporal
+    call    checkPlayerColision     ; Llama a la funcion para detectar colisiones del alien
+
+    mov     [player_x], ax          ; Updates pos y of player
+
+    ret                             ; return
+
+playerLeft:                         ; Moves player left
+    mov     ax, 06h                 ; Moves the game height to ax
+    cmp     [player_x], ax          ; compares the player_y to the right border
+    jle      exitRoutine             ; if equal, return. Dont move
+
+    call    deletePlayer            ; Deletes player from screen
+
+    mov     ax, [player_x]          ; Mueve la posicion x del alien a ax
+    sub     ax, [player_speed]      ; Resta la velocidad del alien a ax
+    mov     [temp_player_x], ax     ; Almacena la nueva posicion en una variable temporal
+    call    checkPlayerColision     ; Llama a la funcion para detectar colisiones del alien
+
+    mov     [player_x], ax          ; Updates pos y of player
+    
+
+    ret                             ; return
+
+; Render walls------------------------------------------------------------------------------
+
+renderWalls:
+    mov    ax, 01h
+    cmp    ax, [level]
+    je     renderWallsLvl1Main
+    jmp    renderWallsLvl2Main
+
+renderWallsLvl1Main:
+    mov esi, 0 ; initialize i to 0
+    jmp renderWallsLvl1Loop
+
+renderWallsLvl1Loop:
+    cmp     esi, [total_walls_lvl_1]  ; Compara el contador i con el total de muros en el nivel 2
+    je      exitRoutine
+    mov     cx, [walls_x_start_l1 + 4*esi]            
+    mov     dx, [walls_y_start_l1 + 4*esi]
+    jmp     renderWallsLvl1Aux
+
+
+renderWallsLvl1Aux:
+    mov     ah, 0ch                           ; Draw pixel
+    mov     al, [walls_color]                 ; player color 
+    mov     bh, 00h                           ; Page
+  
+    int     10h                               ; Interrupt 
+    inc     cx                                ; cx +1
+    mov     ax, cx                            ; mno
+    cmp     ax, [walls_x_end_l1 + 4*esi]      ; compares if ax is greater than the wall x limit 
+    jng     renderWallsLvl1Aux                ; if not greater, draw next column
+    jmp     renderWallsLvl1Aux2               ; Else, jump to next aux function
+
+
+renderWallsLvl1Aux2:
+    mov     cx, [walls_x_start_l1 + 4*esi]    ; reset columns
+    inc     dx                                ; dx +1
+    mov     ax, dx                  
+    cmp     ax, [walls_y_end_l1 + 4*esi]      ; compares if ax is greater than player size
+    jng     renderWallsLvl1Aux                ; if not greater, draw next row
+    jmp     renderWallsLvl1Aux3               ; Else, return
+
+renderWallsLvl1Aux3:
+    inc esi  ; +=1 to i counter of the walls 
+    jmp renderWallsLvl1Loop
+
+
+
+;-----------------------Render Walls Level 2 -------------------------------------------------
+
+renderWallsLvl2Main:
+    mov esi, 0                 ; initialize i to 0
+    jmp renderWallsLvl2Loop
+
+renderWallsLvl2Loop:
+    cmp     esi, [total_walls_lvl_2]  ; Compara el contador i con el total de muros en el nivel 2
+    je      exitRoutine
+    mov     cx, [walls_x_start_l2 + 4*esi]            
+    mov     dx, [walls_y_start_l2 + 4*esi]
+    jmp     renderWallsLvl2Aux
+
+
+renderWallsLvl2Aux:
+    mov     ah, 0ch                           ; Draw pixel
+    mov     al, [walls_color]                 ; player color 
+    mov     bh, 00h                           ; Page
+  
+    int     10h                               ; Interrupt 
+    inc     cx                                ; cx +1
+    mov     ax, cx                            ; mno
+    cmp     ax, [walls_x_end_l2 + 4*esi]      ; compares if ax is greater than the wall x limit 
+    jng     renderWallsLvl2Aux                ; if not greater, draw next column
+    jmp     renderWallsLvl2Aux2               ; Else, jump to next aux function
+
+
+renderWallsLvl2Aux2:
+    mov     cx, [walls_x_start_l2 + 4*esi]    ; reset columns
+    inc     dx                                ; dx +1
+    mov     ax, dx                  
+    cmp     ax, [walls_y_end_l2 + 4*esi]      ; compares if ax is greater than player size
+    jng     renderWallsLvl2Aux                ; if not greater, draw next row
+    jmp     renderWallsLvl2Aux3               ; Else, return
+
+renderWallsLvl2Aux3:
+    inc esi  ; +=1 to i counter of the walls 
+    jmp renderWallsLvl2Loop
+
+
+;-----------------------Render Goal-------------------------------------------------
+
+renderGoal:
+    mov    ax, 01h
+    cmp    ax, [level]
+    je     renderGoalLevel1
+    jmp    renderGoalLevel2
+
+renderGoalLevel1: 
+    mov ax, [goal_level_1_x]
+    mov [goal_x], ax
+    mov ax, [goal_level_1_y]
+    mov [goal_y], ax
+    jmp renderGoalAux
+
+renderGoalLevel2: 
+    mov ax, [goal_level_2_x]
+    mov [goal_x], ax
+    mov ax, [goal_level_2_y]
+    mov [goal_y], ax
+    jmp renderGoalAux
+
+renderGoalAux:
+    mov     cx, [goal_x]            ; Posicion inicial x del alien
+    mov     dx, [goal_y]            ; Posicion inicial y del alien
+    jmp     renderGoalAux1         ; Salta a la funcion auxliar
+
+renderGoalAux1:
+    mov     ah, 0ch                 ; Draw pixel
+    mov     al, [goal_color]        ; player color 
+    mov     bh, 00h                 ; Page
+    int     10h                     ; Interrupt 
+    inc     cx                      ; cx +1
+    mov     ax, cx                  
+    sub     ax, [goal_x]          ; Substract player width with the current column
+    cmp     ax, [player_size]       ; compares if ax is greater than player size
+    jng     renderGoalAux1         ; if not greater, draw next column
+    jmp     renderGoalAux2        ; Else, jump to next aux function
+
+renderGoalAux2:
+    mov     cx, [goal_x]            ; reset columns
+    inc     dx                        ; dx +1
+    mov     ax, dx                  
+    sub     ax, [goal_y]            ; Substract player height with the current row
+    cmp     ax, [player_size]         ; compares if ax is greater than player size
+    jng     renderGoalAux1           ; if not greater, draw next row
+    ret                               ; Else, return
+
+
+
+
+;-----------------------Pasue Logic --------------------------------------------------
+
+checkPlayerPauseInput:              ; Checks Pause status
+    mov     ah, 01h                 ; Gets keyboard input 
+    int     16h                     ; Interruption
+    jz      exitRoutine             ; if nothing pressed, return
+    
+    mov     ah, 00h                 ; Reads key pressed
+    int     16h                     ; Interruption
+
+    cmp     ah, 26h                 ; if key pressed is l
+    je      unPauseGame             ; unpaused game
+
+    cmp     ah, 6ch                 ; if key pressed is L
+    je      unPauseGame             ; unpaused game
+
+    ret                             ; Sino, Retornar
+
+pauseGame:                          ; Pauses the game
+    mov     ax, 01h                 ; Moves 1 to ax
+    mov     [gamePaused], ax        ; Moves 1 to the variable gamePaused
+    ret                             ; return
+
+unPauseGame:                        ; Unpauses the game
+    mov     ax, 00h                 ; Moves 0 to ax
+    mov     [gamePaused], ax         ; Moves 0 to the variable gamePaused
+    ret                             ; return
+
+;-----------------------Check colisions-------------------------------------------------
+
+
+checkPlayerColision:
+    push ax
+
+    mov cx, [temp_player_x]
+    mov dx, [temp_player_y]
+    mov ah, 0dh
+    mov bh, 00h
+    int 10h
+
+    cmp al, [walls_color]
+    je exitPlayerMovement
+
+    cmp al, [goal_color]
+    je goalReached
+
+    pop ax
+
+    ret
+
+goalReached:
+    mov    ax, 01h
+    cmp    ax, [level]
+    je     startLevel2
+    call   clearScreen
+    jmp    winnerLoop
+
+
+exitPlayerMovement:
+    mov     ax, [player_x]            ; Mueve la posicion x del alien a ax
+    mov     [temp_player_x], ax           ; Almacena ax a la posicion temporal x del alien
+    mov     ax, [player_y]            ; Mueve la posicion y del alien a ax
+    mov     [temp_player_y], ax           ; Almacena ax a la posicion temporal y del alien
+
+    call resetGame 
+
+
+
+
+; Util functions --------------------------------------------------------------------------------------
+
+resetGame:
+    call clearScreen
+    jmp startGame
 
 exitRoutine:                        ; Funcion encargada de retornar
     ret                             ; Retornar
