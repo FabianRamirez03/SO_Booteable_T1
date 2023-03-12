@@ -47,9 +47,19 @@ walls_y_end_l1    dw 0fh, 39h, 39h, 1bh, 45h, 45h, 09h ; Number of walls for L1
 
 total_walls_lvl_1 dw 07h  
 
-
-
 walls_n dw 00h ; current walls number
+
+; Goal ----------------------------------------------------------------------------------------------------
+
+goal_x   dw      4bh               ; x goal for current Level  
+goal_y   dw      3ah               ; y goal for current Level   
+
+goal_level_1_x   dw      4bh       ; x goal level 1  
+goal_level_1_y   dw      3ah       ; y goal level 1  
+
+goal_color       dw      04h       ; goal color
+
+
 
 ; Texts ---------------------------------------------------------------------------------------------------
 
@@ -117,6 +127,7 @@ gameLoop:                           ; Ciclo principal del juego
 
     call renderPlayer               ; function to draw the player
     call renderWalls               ; function to draw the walls
+    call renderGoal
 
     ;call renderTextHints           ; function to draw the hints for keyboard use
 
@@ -452,6 +463,50 @@ renderWallsLvl1Aux3:
 renderWallsLvl2:
     ret
 
+;-----------------------Render Goal-------------------------------------------------
+
+renderGoal:
+    mov    ax, 01h
+    cmp    ax, [level]
+    je     renderGoalLevel1
+    jmp    exitRoutine
+
+renderGoalLevel1: 
+    mov ax, [goal_level_1_x]
+    mov [goal_x], ax
+    mov ax, [goal_level_1_y]
+    mov [goal_y], ax
+    jmp renderGoalAux
+
+renderGoalAux:
+    mov     cx, [goal_x]            ; Posicion inicial x del alien
+    mov     dx, [goal_y]            ; Posicion inicial y del alien
+    jmp     renderGoalAux1         ; Salta a la funcion auxliar
+
+renderGoalAux1:
+    mov     ah, 0ch                 ; Draw pixel
+    mov     al, [goal_color]        ; player color 
+    mov     bh, 00h                 ; Page
+    int     10h                     ; Interrupt 
+    inc     cx                      ; cx +1
+    mov     ax, cx                  
+    sub     ax, [goal_x]          ; Substract player width with the current column
+    cmp     ax, [player_size]       ; compares if ax is greater than player size
+    jng     renderGoalAux1         ; if not greater, draw next column
+    jmp     renderGoalAux2        ; Else, jump to next aux function
+
+renderGoalAux2:
+    mov     cx, [goal_x]            ; reset columns
+    inc     dx                        ; dx +1
+    mov     ax, dx                  
+    sub     ax, [goal_y]            ; Substract player height with the current row
+    cmp     ax, [player_size]         ; compares if ax is greater than player size
+    jng     renderGoalAux1           ; if not greater, draw next row
+    ret                               ; Else, return
+
+
+
+
 
 ;-----------------------Check colisions-------------------------------------------------
 
@@ -487,7 +542,7 @@ exitPlayerMovement:
 
 resetGame:
     call clearScreen
-    jmp menuLoop
+    jmp startGame
 
 exitRoutine:                        ; Funcion encargada de retornar
     ret                             ; Retornar
