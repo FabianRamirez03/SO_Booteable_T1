@@ -18,7 +18,7 @@ height dw  0c8h                     ; screen height 200 p
 gameHeight dw 8ch ; Board height set to 100p
 gameWidth dw 8ch ; Board width set to 150p
 
-gamePaused dw 00h ; Flag to know if the game is paused
+gamePaused dw 00h ; Flag to know if the game is paused. 0 not paused. 1 paused
 
 ; player
 
@@ -148,7 +148,7 @@ winnerLoop:
     mov     [time], dl              ; Sino, almacena el nuevo tiempo
     
     call    checkPlayerMenuAction   ; Llama la funcion encargada de verificar teclas en el menu principal
-
+    
     call    drawWinnerMenu          ; Llama a la funcion encargada de escribir texto del menu
 
     jmp     winnerLoop              ; Salta al incio de la funcion
@@ -409,7 +409,7 @@ checkPlayerGameInput:
     mov     ax, 00h                   ; Reset reg ax
     cmp     ax, [gamePaused]           ; move the gamePaused Flag to ax
     je      makeMovements             ; If the game is not paused, player can move 
-    ;jmp     checkPlayerPausedAction   ; If the game is paused, checks if the input is to unpaused the game
+    jmp     checkPlayerPauseInput   ; If the game is paused, checks if the input is to unpaused the game
 
 
 makeMovements:
@@ -438,6 +438,12 @@ makeMovements:
 
     cmp     ah, 72h                 ; If the key pushed is R
     je      resetGame               ; Resets game
+
+    cmp     ah, 26h                 ; If the key pushed is l
+    je      pauseGame               ; Pause the game
+
+    cmp     ah, 6ch                 ; If the key pushed is L
+    je      pauseGame               ; Pause the game
 
     ret
 
@@ -649,8 +655,36 @@ renderGoalAux2:
 
 
 
+;-----------------------Pasue Logic --------------------------------------------------
+
+checkPlayerPauseInput:              ; Checks Pause status
+    mov     ah, 01h                 ; Gets keyboard input 
+    int     16h                     ; Interruption
+    jz      exitRoutine             ; if nothing pressed, return
+    
+    mov     ah, 00h                 ; Reads key pressed
+    int     16h                     ; Interruption
+
+    cmp     ah, 26h                 ; if key pressed is l
+    je      unPauseGame             ; unpaused game
+
+    cmp     ah, 6ch                 ; if key pressed is L
+    je      unPauseGame             ; unpaused game
+
+    ret                             ; Sino, Retornar
+
+pauseGame:                          ; Pauses the game
+    mov     ax, 01h                 ; Moves 1 to ax
+    mov     [gamePaused], ax        ; Moves 1 to the variable gamePaused
+    ret                             ; return
+
+unPauseGame:                        ; Unpauses the game
+    mov     ax, 00h                 ; Moves 0 to ax
+    mov     [gamePaused], ax         ; Moves 0 to the variable gamePaused
+    ret                             ; return
 
 ;-----------------------Check colisions-------------------------------------------------
+
 
 checkPlayerColision:
     push ax
