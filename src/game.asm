@@ -146,7 +146,7 @@ winnerLoop:
     cmp     dl, [time]              ; Compara el tiempo actual con el tiempo anterior
     je      winnerLoop              ; Si son iguales vuelve a calcular el ciclo
     mov     [time], dl              ; Sino, almacena el nuevo tiempo
-  
+    
     call    checkPlayerMenuAction   ; Llama la funcion encargada de verificar teclas en el menu principal
 
     call    drawWinnerMenu          ; Llama a la funcion encargada de escribir texto del menu
