@@ -82,6 +82,13 @@ menuWelc  dw '            BIENVENIDO              ', 0h
 menuDeco2 dw '************************************', 0h
 menuSpace dw '   Presione ESPACIO para continuar  ', 0h
 
+winnerDeco1 dw '************************************', 0h
+winnerTitle dw '            FELICIDADES             ', 0h
+winnerWelc  dw '              GANASTE               ', 0h
+winnerDeco2 dw '************************************', 0h
+winnerSpace dw '   Presione ESPACIO para repetir    ', 0h
+
+
 textColor     dw 150h
 
 
@@ -131,6 +138,21 @@ menuLoop:                           ; Ciclo principal del menu de bienvenida
     call    drawTextMenu            ; Llama a la funcion encargada de escribir texto del menu
 
     jmp     menuLoop                ; Salta al incio de la funcion
+
+winnerLoop:
+    mov     ah, 00h                 ; Activa obtener el tiempo de la computadora
+    int     1ah                     ; Ejecutar interrupcion
+
+    cmp     dl, [time]              ; Compara el tiempo actual con el tiempo anterior
+    je      winnerLoop              ; Si son iguales vuelve a calcular el ciclo
+    mov     [time], dl              ; Sino, almacena el nuevo tiempo
+  
+    call    checkPlayerMenuAction   ; Llama la funcion encargada de verificar teclas en el menu principal
+
+    call    drawWinnerMenu          ; Llama a la funcion encargada de escribir texto del menu
+
+    jmp     winnerLoop              ; Salta al incio de la funcion
+
 
 ; Loop principal del juego 
 
@@ -231,6 +253,46 @@ drawTextMenu:                       ; Funcion encargada de escribir los textos d
 
     ; Texto para indicarle al usuario que presione espacio de la pantalla de bienvenida
     mov     bx, menuSpace           ; Mueve a bx el puntero del quinta texto
+    inc     dh                      ; Incrementa dh
+    inc     dh                      ; Incrementa dh
+    inc     dh                      ; Incrementa dh
+    mov     dl, 02h                 ; Mueve a dl un 2
+    call    drawText                ; Llama a la funcion encargada de escribir texto
+
+    ret
+
+drawWinnerMenu:                     ; Funcion encargada de escribir los textos del menu de bienvenida
+    mov     bx, [textColor]         ; Mueve a bx el color del texto
+    mov     [textColor], bx         ; Almacena el nuevo bx al color del texto
+
+    ; Elemento decorativo de la pantalla de bienvenida
+    mov     bx, winnerDeco1         ; Mueve a bx el puntero del primer texto
+    mov     dh, 07h                 ; Mueve a dh un 7
+    mov     dl, 02h                 ; Mueve a dl un 2
+    call    drawText                ; Llama a la funcion encargada de escribir texto
+
+    ; Titulo de la pantalla de bienvenida
+    mov     bx, winnerTitle         ; Mueve a bx el puntero del segundo texto
+    inc     dh                      ; Incrementa dh
+    inc     dh                      ; Incrementa dh
+    mov     dl, 02h                 ; Mueve a dl un 2
+    call    drawText                ; Llama a la funcion encargada de escribir texto
+
+    ; Texto de bienvenida de la pantalla de bienvenida
+    mov     bx, winnerWelc          ; Mueve a bx el puntero del tercer texto
+    inc     dh                      ; Incrementa dh
+    mov     dl, 02h                 ; Mueve a dl un 2
+    call    drawText                ; Llama a la funcion encargada de escribir texto
+
+    ; Elemento decorativo de la pantalla de bienvenida
+    mov     bx, winnerDeco2         ; Mueve a bx el puntero del cuarto texto
+    inc     dh                      ; Incrementa dh
+    inc     dh                      ; Incrementa dh
+    mov     dl, 02h                 ; Mueve a dl un 2
+    call    drawText                ; Llama a la funcion encargada de escribir texto
+
+    ; Texto para indicarle al usuario que presione espacio de la pantalla de bienvenida
+    mov     bx, winnerSpace         ; Mueve a bx el puntero del quinta texto
     inc     dh                      ; Incrementa dh
     inc     dh                      ; Incrementa dh
     inc     dh                      ; Incrementa dh
@@ -603,11 +665,18 @@ checkPlayerColision:
     je exitPlayerMovement
 
     cmp al, [goal_color]
-    je startLevel2
+    je goalReached
 
     pop ax
 
     ret
+
+goalReached:
+    mov    ax, 01h
+    cmp    ax, [level]
+    je     startLevel2
+    call   clearScreen
+    jmp    winnerLoop
 
 
 exitPlayerMovement:
