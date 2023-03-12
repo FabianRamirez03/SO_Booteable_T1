@@ -47,8 +47,8 @@ walls_y_end_l1    dw 0fh, 39h, 39h, 1bh, 45h, 45h ; Number of walls for L1
 
 total_walls_lvl_1 dw 06h  
 
-walls_x times 3 dw 00h ; current walls positions
-walls_y times 3 dw 00h ; current walls positions
+
+
 walls_n dw 00h ; current walls number
 
 ; Texts ---------------------------------------------------------------------------------------------------
@@ -294,6 +294,9 @@ deletePlayer:                       ; Funtion to erase player from screen
     mov     [player_color], al      ; Updates player color to black
     ret                             ; return
 
+
+; Checks player inputs -----------------------------------------------------------------------------------------------------------
+
 checkPlayerGameInput:
     mov     ax, 00h                   ; Reset reg ax
     cmp     ax, [gamePaused]           ; move the gamePaused Flag to ax
@@ -357,9 +360,6 @@ playerDown:                         ; Moves player down
     call    checkPlayerColision     ; Llama a la funcion para detectar colisiones del alien
 
     mov     [player_y], ax            ; Updates pos y of player
-    
-    mov     ax, 03h                 ; Moves 1 to ax
-    mov     [player_dir], ax        ; moves 1 to the player direction
 
     ret                             ; return
 
@@ -377,9 +377,6 @@ playerRight:                        ; Moves player right
     call    checkPlayerColision     ; Llama a la funcion para detectar colisiones del alien
 
     mov     [player_x], ax          ; Updates pos y of player
-    
-    mov     ax, 00h                 ; Moves 0 to ax
-    mov     [player_dir], ax        ; moves 0 to the player direction
 
     ret                             ; return
 
@@ -397,12 +394,10 @@ playerLeft:                         ; Moves player left
 
     mov     [player_x], ax          ; Updates pos y of player
     
-    mov     ax, 00h                 ; Moves 0 to ax
-    mov     [player_dir], ax        ; moves 0 to the player direction
 
     ret                             ; return
 
-; Render walls
+; Render walls------------------------------------------------------------------------------
 
 renderWalls:
     mov    ax, 01h
@@ -478,6 +473,11 @@ exitPlayerMovement:
     mov     [temp_player_y], ax           ; Almacena ax a la posicion temporal y del alien
 
     call resetGame 
+
+
+
+
+; Util functions --------------------------------------------------------------------------------------
 
 resetGame:
     call clearScreen
