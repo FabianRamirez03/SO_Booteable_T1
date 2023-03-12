@@ -49,6 +49,16 @@ total_walls_lvl_1 dw 07h
 
 walls_n dw 00h ; current walls number
 
+; Walls level 2 ----------------------------------------------------------------------------------------------------
+
+walls_x_start_l2  dw 13h, 19h, 25h, 2bh, 37h, 3dh, 5bh, 55h, 4fh, 37h, 37h, 31h, 1fh, 1fh, 07h, 07h, 0dh, 19h, 00h, 13h, 19h, 25h, 25h, 2bh, 43h, 49h, 4fh, 49h, 43h, 49h, 43h ; Walls's X positions for L2
+walls_y_start_l2  dw 01h, 07h, 0dh, 19h, 07h, 07h, 0dh, 43h, 49h, 4fh, 43h, 3dh, 43h, 49h, 4fh, 2bh, 2bh, 13h, 13h, 37h, 37h, 31h, 25h, 25h, 13h, 13h, 19h, 2bh, 37h, 3dh, 43h ; Walls's Y positions for L2
+
+walls_x_end_l2    dw 18h, 2ah, 2ah, 3ch, 3ch, 60h, 60h, 5ah, 54h, 4eh, 3ch, 36h, 30h, 24h, 1eh, 0ch, 1eh, 1eh, 18h, 18h, 2ah, 42h, 2ah, 48h, 48h, 54h, 54h, 4eh, 48h, 4eh, 48h ; Walls's X positions for L1
+walls_y_end_l2    dw 0ch, 0ch, 1eh, 1eh, 18h, 0ch, 42h, 48h, 4eh, 54h, 4eh, 42h, 48h, 54h, 54h, 4eh, 30h, 2ah, 18h, 48h, 3ch, 36h, 30h, 2ah, 24h, 18h, 3ch, 30h, 3ch, 42h, 48h ; Number of walls for L1
+
+total_walls_lvl_2 dw 1fh  
+
 ; Goal ----------------------------------------------------------------------------------------------------
 
 goal_x   dw      4bh               ; x goal for current Level  
@@ -84,6 +94,8 @@ startProgram:
 startGame:                          ; Funcion de inicio del juego
     call    setLevel1               ; Llama a la funcion para colocar los parametros del primer nivel
     call    clearScreen             ; Llama a la funcion para limpiar la pantalla
+    call    renderWalls             ; function to draw the walls
+    call    renderGoal
     jmp     gameLoop                ; Salta a la funcion principal del programa
 
 
@@ -126,8 +138,7 @@ gameLoop:                           ; Ciclo principal del juego
     call checkPlayerGameInput       ; function to check whether the keys have been clicked or not  
 
     call renderPlayer               ; function to draw the player
-    call renderWalls               ; function to draw the walls
-    call renderGoal
+   
 
     ;call renderTextHints           ; function to draw the hints for keyboard use
 
