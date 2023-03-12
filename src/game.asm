@@ -61,11 +61,14 @@ total_walls_lvl_2 dd 1fh
 
 ; Goal ----------------------------------------------------------------------------------------------------
 
-goal_x   dw      4bh               ; x goal for current Level  
-goal_y   dw      3ah               ; y goal for current Level   
+goal_x           dw      4bh       ; x goal for current Level  
+goal_y           dw      3ah       ; y goal for current Level   
 
 goal_level_1_x   dw      4bh       ; x goal level 1  
 goal_level_1_y   dw      3ah       ; y goal level 1  
+
+goal_level_2_x   dw      3dh       ; x goal level 2  
+goal_level_2_y   dw      3dh       ; y goal level 2  
 
 goal_color       dw      04h       ; goal color
 
@@ -102,6 +105,7 @@ startLevel2:
     call    setLevel2
     call    clearScreen
     call    renderWalls             ; function to draw the walls
+    call    renderGoal
     jmp     gameLoop
 
 ; Inicia el display que mostrara el contenido del juego
@@ -538,12 +542,19 @@ renderGoal:
     mov    ax, 01h
     cmp    ax, [level]
     je     renderGoalLevel1
-    jmp    exitRoutine
+    jmp    renderGoalLevel2
 
 renderGoalLevel1: 
     mov ax, [goal_level_1_x]
     mov [goal_x], ax
     mov ax, [goal_level_1_y]
+    mov [goal_y], ax
+    jmp renderGoalAux
+
+renderGoalLevel2: 
+    mov ax, [goal_level_2_x]
+    mov [goal_x], ax
+    mov ax, [goal_level_2_y]
     mov [goal_y], ax
     jmp renderGoalAux
 
