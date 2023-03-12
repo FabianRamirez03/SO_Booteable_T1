@@ -325,7 +325,7 @@ makeMovements:
     ret
 
 playerUp:                           ; Moves player up
-    mov     ax, 06h                 ; Moves 5 to ax
+    mov     ax, 06h                 ; Moves 6 to ax
     cmp     [player_y], ax          ; compares the player_y to the up border
     jle      exitRoutine             ; if equal, return. Dont move
 
@@ -334,22 +334,18 @@ playerUp:                           ; Moves player up
     mov     ax, [player_y]          ; Mueve la posicion y del alien a ax
     sub     ax, [player_speed]      ; Resta la velocidad del alien a ax
     mov     [temp_player_y], ax     ; Almacena la nueva posicion en una variable temporal
-    ;call    checkAlienColision     ; Llama a la funcion para detectar colisiones del alien
-
-    ;cmp     ax, 00h                ; Verifica si ax es 0
-    ;je      exitAlienMovement      ; En caso de serlo, significa que la nueva posicion es invalida, y salta a la funcion de salida
+    
+    call    checkPlayerColision     ; Llama a la funcion para detectar colisiones del alien
 
     mov     [player_y], ax            ; Updates pos y of player
-    
-    mov     ax, 03h                 ; Moves 3 to ax
-    mov     [player_dir], ax        ; moves 3 to the player direction
+
 
     ret                             ; return
 
 
 playerDown:                         ; Moves player down
     mov     ax, [gameHeight]        ; Moves the game height to ax
-    add     ax, 06h                 ; add 5 to ax 
+    add     ax, 06h                 ; add 6 to ax 
     cmp     [player_y], ax          ; compares the player_y to the up border
     jge      exitRoutine             ; if equal, return. Dont move
 
@@ -358,10 +354,7 @@ playerDown:                         ; Moves player down
     mov     ax, [player_y]          ; Mueve la posicion y del alien a ax
     add     ax, [player_speed]      ; Resta la velocidad del alien a ax
     mov     [temp_player_y], ax     ; Almacena la nueva posicion en una variable temporal
-    ;call    checkAlienColision     ; Llama a la funcion para detectar colisiones del alien
-
-    ;cmp     ax, 00h                ; Verifica si ax es 0
-    ;je      exitAlienMovement      ; En caso de serlo, significa que la nueva posicion es invalida, y salta a la funcion de salida
+    call    checkPlayerColision     ; Llama a la funcion para detectar colisiones del alien
 
     mov     [player_y], ax            ; Updates pos y of player
     
@@ -381,10 +374,7 @@ playerRight:                        ; Moves player right
     mov     ax, [player_x]          ; Mueve la posicion x del alien a ax
     add     ax, [player_speed]      ; Resta la velocidad del alien a ax
     mov     [temp_player_x], ax     ; Almacena la nueva posicion en una variable temporal
-    ;call    checkAlienColision     ; Llama a la funcion para detectar colisiones del alien
-
-    ;cmp     ax, 00h                ; Verifica si ax es 0
-    ;je      exitAlienMovement      ; En caso de serlo, significa que la nueva posicion es invalida, y salta a la funcion de salida
+    call    checkPlayerColision     ; Llama a la funcion para detectar colisiones del alien
 
     mov     [player_x], ax          ; Updates pos y of player
     
@@ -403,10 +393,7 @@ playerLeft:                         ; Moves player left
     mov     ax, [player_x]          ; Mueve la posicion x del alien a ax
     sub     ax, [player_speed]      ; Resta la velocidad del alien a ax
     mov     [temp_player_x], ax     ; Almacena la nueva posicion en una variable temporal
-    ;call    checkAlienColision     ; Llama a la funcion para detectar colisiones del alien
-
-    ;cmp     ax, 00h                ; Verifica si ax es 0
-    ;je      exitAlienMovement      ; En caso de serlo, significa que la nueva posicion es invalida, y salta a la funcion de salida
+    call    checkPlayerColision     ; Llama a la funcion para detectar colisiones del alien
 
     mov     [player_x], ax          ; Updates pos y of player
     
@@ -464,6 +451,37 @@ renderWallsLvl1Aux3:
 renderWallsLvl2:
     ret
 
+
+;-----------------------Check colisions-------------------------------------------------
+
+checkPlayerColision:
+    push ax
+
+    mov cx, [temp_player_x]
+    mov dx, [temp_player_y]
+    mov ah, 0dh
+    mov bh, 00h
+    int 10h
+
+    cmp al, [walls_color]
+    je exitPlayerMovement
+
+    pop ax
+
+    ret
+
+
+exitPlayerMovement:
+    mov     ax, [player_x]            ; Mueve la posicion x del alien a ax
+    mov     [temp_player_x], ax           ; Almacena ax a la posicion temporal x del alien
+    mov     ax, [player_y]            ; Mueve la posicion y del alien a ax
+    mov     [temp_player_y], ax           ; Almacena ax a la posicion temporal y del alien
+
+    call resetGame 
+
+resetGame:
+    call clearScreen
+    jmp menuLoop
 
 exitRoutine:                        ; Funcion encargada de retornar
     ret                             ; Retornar
