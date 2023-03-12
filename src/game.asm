@@ -39,11 +39,11 @@ walls_index dw 00h ; walls counter
 wallx dw 00h ; x wall pos
 wally dw 00h ; y wall pos
 
-walls_x_start_l1  dw 0fh, 3fh, 45h, 00h, 33h, 39h, 0fh ; Walls's X positions for L1
-walls_y_start_l1  dw 0ah, 10h, 34h, 16h, 1ch, 40h, 00h ; Y positions for L1
+walls_x_start_l1  dd 0fh, 3fh, 45h, 00h, 33h, 39h, 0fh ; Walls's X positions for L1
+walls_y_start_l1  dd 0ah, 10h, 34h, 16h, 1ch, 40h, 00h ; Y positions for L1
 
-walls_x_end_l1    dw 44h, 44h, 50h, 38h, 38h, 50h, 14h ; Walls's X positions for L1
-walls_y_end_l1    dw 0fh, 39h, 39h, 1bh, 45h, 45h, 09h ; Number of walls for L1
+walls_x_end_l1    dd 44h, 44h, 50h, 38h, 38h, 50h, 14h ; Walls's X positions for L1
+walls_y_end_l1    dd 0fh, 39h, 39h, 1bh, 45h, 45h, 09h ; Number of walls for L1
 
 total_walls_lvl_1 dd 07h  
 
@@ -460,8 +460,8 @@ renderWallsLvl1Main:
 renderWallsLvl1Loop:
     cmp     esi, [total_walls_lvl_1]  ; Compara el contador i con el total de muros en el nivel 2
     je      exitRoutine
-    mov     cx, [walls_x_start_l1 + 2*esi]            
-    mov     dx, [walls_y_start_l1 + 2*esi]
+    mov     cx, [walls_x_start_l1 + 4*esi]            
+    mov     dx, [walls_y_start_l1 + 4*esi]
     jmp     renderWallsLvl1Aux
 
 
@@ -473,16 +473,16 @@ renderWallsLvl1Aux:
     int     10h                               ; Interrupt 
     inc     cx                                ; cx +1
     mov     ax, cx                            ; mno
-    cmp     ax, [walls_x_end_l1 + 2*esi]      ; compares if ax is greater than the wall x limit 
+    cmp     ax, [walls_x_end_l1 + 4*esi]      ; compares if ax is greater than the wall x limit 
     jng     renderWallsLvl1Aux                ; if not greater, draw next column
     jmp     renderWallsLvl1Aux2               ; Else, jump to next aux function
 
 
 renderWallsLvl1Aux2:
-    mov     cx, [walls_x_start_l1 + 2*esi]    ; reset columns
+    mov     cx, [walls_x_start_l1 + 4*esi]    ; reset columns
     inc     dx                                ; dx +1
     mov     ax, dx                  
-    cmp     ax, [walls_y_end_l1 + 2*esi]      ; compares if ax is greater than player size
+    cmp     ax, [walls_y_end_l1 + 4*esi]      ; compares if ax is greater than player size
     jng     renderWallsLvl1Aux                ; if not greater, draw next row
     jmp     renderWallsLvl1Aux3               ; Else, return
 
