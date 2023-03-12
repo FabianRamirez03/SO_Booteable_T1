@@ -22,10 +22,10 @@ gamePaused dw 00h ; Flag to know if the game is paused
 
 ; player
 
-player_x dw      09h   ; x position player 
-player_y dw      10h   ; y position player 
-temp_player_x dw 09h   ; temp x position player
-temp_player_y dw 10h   ; temp y position player
+player_x dw      03h   ; x position player 
+player_y dw      0ah   ; y position player 
+temp_player_x dw 03h   ; temp x position player
+temp_player_y dw 0ah   ; temp y position player
 player_speed dw  06h   ; player speed
 player_color dw  03h   ; player color
 player_size dw   05h   ; player dimensions 
@@ -39,13 +39,13 @@ walls_index dw 00h ; walls counter
 wallx dw 00h ; x wall pos
 wally dw 00h ; y wall pos
 
-walls_x_start_l1  dw 09h, 3fh, 45h, 09h, 33h, 39h ; Walls's X positions for L1
-walls_y_start_l1  dw 0ah, 10h, 34h, 16h, 1ch, 40h ; Y positions for L1
+walls_x_start_l1  dw 0fh, 3fh, 45h, 00h, 33h, 39h, 0fh ; Walls's X positions for L1
+walls_y_start_l1  dw 0ah, 10h, 34h, 16h, 1ch, 40h, 00h ; Y positions for L1
 
-walls_x_end_l1    dw 44h, 44h, 50h, 38h, 38h, 50h ; Walls's X positions for L1
-walls_y_end_l1    dw 0fh, 39h, 39h, 1bh, 45h, 45h ; Number of walls for L1
+walls_x_end_l1    dw 44h, 44h, 50h, 38h, 38h, 50h, 14h ; Walls's X positions for L1
+walls_y_end_l1    dw 0fh, 39h, 39h, 1bh, 45h, 45h, 09h ; Number of walls for L1
 
-total_walls_lvl_1 dw 06h  
+total_walls_lvl_1 dw 07h  
 
 
 
@@ -244,10 +244,10 @@ setLevel1:                          ; Funcion encargada de iniciar el primer niv
     mov     ax, 01h                 ; Mueve 1 a ax
     mov     [level], ax             ; Mueve ax al nivel actual
 
-    mov     ax, 09h                       ; Mueve 09 a ax
+    mov     ax, 03h                       ; Mueve 09 a ax
     mov     [player_x], ax                ; Mueve el 09 a la posicion inicial x del alien
     mov     [temp_player_x], ax           ; Mueve el 09 a la posicion inicial temporal x del alien
-    mov     ax, 10h                       ; Mueve 10 a ax
+    mov     ax, 0ah                       ; Mueve 10 a ax
     mov     [player_y], ax                ; Mueve el 10 a la posicion inicial y del alien
     mov     [temp_player_y], ax           ; Mueve el 10 a la posicion inicial temporal y del alien
 
