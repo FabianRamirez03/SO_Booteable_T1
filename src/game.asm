@@ -9,16 +9,6 @@ nop
 time db  00h                        ; tiempo que representa los FPS del programa
 level dw 01h                        ; Nivel del juego
 
-player_x dw 10h ; Player X Pos
-player_y dw 10h ; Player Y Pos
-player_speed dw 0ah ; player speed
-player_color dw 8eh ; player color
-player_size dw 0ah ; length of the side of the player
-
-player_xtmp dw 10h ; Temporal Player X Pos
-player_ytmp dw 10h ; Temporal Player Y Pos
-
-
 
 ; Constantes -----------------------------------------------------------------------------------------------
 
