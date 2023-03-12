@@ -325,6 +325,12 @@ makeMovements:
     cmp     ah, 4bh                 ; If the key pushed is arrow left 
     je      playerLeft              ; Moves player left
 
+    cmp     ah, 13h                 ; If the key pushed is r
+    je      resetGame               ; Resets game
+
+    cmp     ah, 72h                 ; If the key pushed is R
+    je      resetGame               ; Resets game
+
     ret
 
 playerUp:                           ; Moves player up
