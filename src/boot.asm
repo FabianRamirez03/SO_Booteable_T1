@@ -18,7 +18,7 @@ RootDirEntries dw 224 ; Number of entries in root directory
 TotalSectors dw 2880 ; Total number of sectors
 MediaByte db 0xF0 ; Media descriptor byte
 SectorsPerFAT dw 9 ; Sectors per FAT
-SectorsPerTrack dw 18 ; Sectors per track
+SectorsPerTrack dw 63 ; Sectors per track
 NumHeads dw 2 ; Number of heads
 HiddenSectors dd 0 ; Number of hidden sectors
 LargeSectors dd 0 ; Number of LBA sectors
@@ -26,7 +26,7 @@ DriveNumber db 0 ; Drive number
 Signature db 0x41 ; Drive signature
 VolumeID dd 0 ;
 VolumeLabel db "Operativos " ; Volume label (11 characters)
-FileSystem db "FAT12 " ; File system type
+FileSystem db "FAT12   " ; File system type
 
 start:
 ; Initialize registers
@@ -37,7 +37,7 @@ mov ss, ax
 mov es, ax
 mov fs, ax
 mov gs, ax
-mov sp, 0x6EF0 ; Set stack pointer
+mov sp, 0x7C00 ; Set stack pointer
 sti
 
 
@@ -79,6 +79,6 @@ jmp $ ; Infinite loop
 
 errormsg db "Error booting...", 0
 
-times 510-($-$$) db 0 ; Pad with zeros until byte 510
+times (510-($-$$)) nop ; Pad with zeros until byte 510
 db 0x55 ; Signature byte 1
 db 0xAA ; Signature byte 2
