@@ -76,308 +76,324 @@ goal_color       dw      04h       ; goal color
 
 ; Texts ---------------------------------------------------------------------------------------------------
 
-menuDeco1 dw '************************************', 0h
-menuTitle dw '            MOBILE MAZE             ', 0h
-menuWelc  dw '            BIENVENIDO              ', 0h
-menuDeco2 dw '************************************', 0h
-menuSpace dw '   Presione ESPACIO para continuar  ', 0h
+menu1 dw '           ****************         ', 0h
+menu2 dw '           * MOBILE  MAZE *         ', 0h
+menu3 dw '           *  BIENVENIDO  *         ', 0h
+menu4 dw '           ****************         ', 0h
+menu5 dw '   Presione ESPACIO para continuar  ', 0h
 
-winnerDeco1 dw '************************************', 0h
-winnerTitle dw '            FELICIDADES             ', 0h
-winnerWelc  dw '              GANASTE               ', 0h
-winnerDeco2 dw '************************************', 0h
-winnerSpace dw '   Presione ESPACIO para repetir    ', 0h
+winner1 dw '          ***************           ', 0h
+winner2 dw '          * FELICIDADES *           ', 0h
+winner3 dw '          *   GANASTE   *           ', 0h
+winner4 dw '          ***************           ', 0h
+winner5 dw '   Presione ESPACIO para repetir    ', 0h
+
+; In-Game Texts ...........................................................................................
+
+inGame1 dw '*************************************', 0h
+inGame2 dw '*            Controls               *', 0h
+inGame3 dw '*      Move-------> Arrow keys      *', 0h
+inGame4 dw '*      Restart----> R key           *', 0h
+inGame5 dw '*      Pause------> L key           *', 0h
+inGame6 dw '*      Current Level:', 0h
+inGame7 dw '1              *', 0h
+inGame8 dw '2              *', 0h
+inGame9 dw '*************************************', 0h
 
 
 textColor     dw 150h
 
 
 ; GAME LOGIC ****************************************************************************************************
-
-;Inicia el programa completo. El usuario ve la pantalla de bienvenida -----------------------------------------------
 startProgram:
-        call initDisplay    ; Inicia el display que mostrara el contenido del juego
-        call clearScreen    ; Limpia el contenido de la pantalla
-        jmp  menuLoop       ; Luego de iniciar la pantalla y limpiarla con pixeles negros, se salta al menu inicial
+        call initDisplay    ; starts display
+        call clearScreen    ; clears display
+        jmp  menuLoop       
 
-;Inicia el programa completo. El usuario ve la pantalla del primer nivel -----------------------------------------------  
-startGame:                          ; Funcion de inicio del juego
-    call    setLevel1               ; Llama a la funcion para colocar los parametros del primer nivel
-    call    clearScreen             ; Llama a la funcion para limpiar la pantalla
+startGame:                          
+    call    setLevel1               ; initialize lvl 1
+    call    clearScreen             ; paints the screen black 
     call    renderWalls             ; function to draw the walls
-    call    renderGoal
-    jmp     gameLoop                ; Salta a la funcion principal del programa
+    call    renderGoal              ; function to draw the goal
+    call    drawInGameText          ; function to display the controls in game
+    jmp     gameLoop                
 
 startLevel2:
-    call    setLevel2
+    call    setLevel2               ;initialize lvl 2
     call    clearScreen
-    call    renderWalls             ; function to draw the walls
+    call    renderWalls             
     call    renderGoal
+    call    drawInGameText  
     jmp     gameLoop
 
-; Inicia el display que mostrara el contenido del juego
-initDisplay:
-    mov ah, 00h     ;  activa el modo  video
-    mov al, 13h     ;  320x200 con 256 colores
-    int 10h         ;  Interrupcion
+
+initDisplay:                        ;video mode interruption to draw on screen
+    mov ah, 00h     
+    mov al, 13h     
+    int 10h        
     ret
 
 
-;  Ciclo del menu de bienvenida -----------------------------------------------------------------------
 
-menuLoop:                           ; Ciclo principal del menu de bienvenida
-    mov     ah, 00h                 ; Activa obtener el tiempo de la computadora
-    int     1ah                     ; Ejecutar interrupcion
 
-    cmp     dl, [time]              ; Compara el tiempo actual con el tiempo anterior
-    je      menuLoop                ; Si son iguales vuelve a calcular el ciclo
-    mov     [time], dl              ; Sino, almacena el nuevo tiempo
-  
-    call    checkPlayerMenuAction   ; Llama la funcion encargada de verificar teclas en el menu principal
+menuLoop:                           ; Menu cycle
 
-    call    drawTextMenu            ; Llama a la funcion encargada de escribir texto del menu
+    call    checkPlayerMenuAction   ; checks if the player has pressed space
 
-    jmp     menuLoop                ; Salta al incio de la funcion
+    call    drawTextMenu            ; draws menu on screen
 
-winnerLoop:
-    mov     ah, 00h                 ; Activa obtener el tiempo de la computadora
-    int     1ah                     ; Ejecutar interrupcion
+    jmp     menuLoop                ; stays in the cycle if nothing happens
 
-    cmp     dl, [time]              ; Compara el tiempo actual con el tiempo anterior
-    je      winnerLoop              ; Si son iguales vuelve a calcular el ciclo
-    mov     [time], dl              ; Sino, almacena el nuevo tiempo
+winnerLoop: 
+
+    call    checkPlayerMenuAction   ; Checks if the player pressed space to play again
     
-    call    checkPlayerMenuAction   ; Llama la funcion encargada de verificar teclas en el menu principal
-    
-    call    drawWinnerMenu          ; Llama a la funcion encargada de escribir texto del menu
+    call    drawWinnerMenu          ; Draws winning screen
 
-    jmp     winnerLoop              ; Salta al incio de la funcion
+    jmp     winnerLoop              ; stays in the cycle if nothing happens
 
 
-; Loop principal del juego 
+gameLoop:                           ; game logic loop
 
-gameLoop:                           ; Ciclo principal del juego
-    mov     ah, 00h                 ; Activa obtener el tiempo de la computadora
-    int     1ah                     ; Ejecutar interrupcion
+    call checkPlayerGameInput       ; function to check whether the keys have been pressed or not  
 
-    ;call clearScreen
+    call renderPlayer               ; function to draw the player constantly
 
-    cmp     dl, [time]              ; Compara el tiempo actual con el tiempo anterior
-    je      gameLoop                ; Si son iguales vuelve a calcular el ciclo
-    mov     [time], dl              ; Sino, almacena el nuevo tiempo
-
-    call checkPlayerGameInput       ; function to check whether the keys have been clicked or not  
-
-    call renderPlayer               ; function to draw the player
-   
-
-    ;call renderTextHints           ; function to draw the hints for keyboard use
-
-    jmp     gameLoop                ; Salta al incio de la funcion
+    jmp     gameLoop                ; stays in the loop
 
 ; Render functions **************************************************************************************
 
-;  Limpia el contenido que haya en la pantalla ----------------------------------------------------------
-
-clearScreen:                        ; Funcion encargada de limpiar la pantala
-    mov     cx, 00h                 ; Posicion inicial x = 0
-    mov     dx, 00h                 ; Posicion inicial = 0
-    jmp     clearScreenAux          ; Salta a la funcion auxliar
+clearScreen:                        ; paints black the display
+    mov     cx, 00h                 ; starting x
+    mov     dx, 00h                 ; starting y
+    jmp     clearScreenAux          
 
 clearScreenAux:
-    mov     ah, 0ch                 ; Dibuja pixel
-    mov     al, 00h                 ; Color negro
+    mov     ah, 0ch                 
+    mov     al, 00h                 
     mov     bh, 00h
-    int     10h                     ; Ejecutar interrupcion
-    inc     cx                      ; Suma uno a cx
-    cmp     cx, [width]             ; Compara cx con el ancho la pantalla
-    jng     clearScreenAux          ; Si cx no es mayor que el ancho de la pantalla, salta a dibujar en la siguiente columna
-    jmp     clearScreenAux2         ; Sino, salta a la funcion auxiliar 2
+    int     10h                     ; interruption that draws a black pixel
+    inc     cx                      ; increases x to draw horizontaly
+    cmp     cx, [width]             
+    jng     clearScreenAux          
+    jmp     clearScreenAux2         
 
 clearScreenAux2:                  
-    mov     cx, 00h                 ; Reinicia las columnas
-    inc     dx                      ; Suma uno a dx
-    cmp     dx, [height]            ; Compara dx con la altura de la pantalla
-    jng     clearScreenAux          ; Si dx no es mayor que el ancho de la pantalla, salta a dibujar la siguiente fila
-    ret                             ; Sino, Retornar
+    mov     cx, 00h                 ; restarts x
+    inc     dx                      ; increases y to draw in the next line
+    cmp     dx, [height]            
+    jng     clearScreenAux          
+    ret                             
 
 
-
-; Comprueba si el usuario presiona espacio en el menu de bienvenida ------------------------------------------
-
-checkPlayerMenuAction:              ; Funcion encargada de verificar la tecla presionada en el menu
-    mov     ah, 01h                 ; Consigue el estado del teclado
-    int     16h                     ; Ejecutar interrupcion
-    jz      exitRoutine             ; Si no se esta presionando nada, salta a salir
-    
-    mov     ah, 00h                 ; Lectura de tecla
-    int     16h                     ; Ejecutar interrupcion
-
-    cmp     ah, 39h                 ; Si la tecla presionada es Espacio
-    je      startGame               ; Inicia el juego
+checkPlayerMenuAction:              ; Checks if a key has been pressed in the menu
+    mov     ah, 01h                
+    int     16h                     ; interruption to get keyboard state
+    jz      exitRoutine             ; if nothing is pressed, returns
+    mov     ah, 00h                 
+    int     16h                     ; interruption to read the key that was pressed
+    cmp     ah, 39h                 ; compares if the key pressed was the space
+    je      startGame               ; starts game if space was pressed
 
     ret
 
 
-; Dibuja el textp el texto en el menu de bienvenida ----------------------------------------------------------
+drawTextMenu:                       ; Draws the text menu
+    mov     bx, [textColor]         ; sets the color of the pixel to be drawn
 
-drawTextMenu:                       ; Funcion encargada de escribir los textos del menu de bienvenida
-    mov     bx, [textColor]         ; Mueve a bx el color del texto
-    mov     [textColor], bx         ; Almacena el nuevo bx al color del texto
+    mov     bx, menu1               ; sets the text to be drawn
+    mov     dh, 07h                 ; y coordinate in pixels
+    mov     dl, 02h                 ; x coordinate in pixels
+    call    drawText                ; calls the function to draw the text
 
-    ; Elemento decorativo de la pantalla de bienvenida
-    mov     bx, menuDeco1           ; Mueve a bx el puntero del primer texto
-    mov     dh, 07h                 ; Mueve a dh un 7
-    mov     dl, 02h                 ; Mueve a dl un 2
-    call    drawText                ; Llama a la funcion encargada de escribir texto
+    mov     bx, menu2           
+    inc     dh                      ; increases y to draw the next text
+    mov     dl, 02h                 
+    call    drawText                
 
-    ; Titulo de la pantalla de bienvenida
-    mov     bx, menuTitle           ; Mueve a bx el puntero del segundo texto
-    inc     dh                      ; Incrementa dh
-    inc     dh                      ; Incrementa dh
-    mov     dl, 02h                 ; Mueve a dl un 2
-    call    drawText                ; Llama a la funcion encargada de escribir texto
+    mov     bx, menu3            
+    inc     dh                      
+    mov     dl, 02h                 
+    call    drawText                
 
-    ; Texto de bienvenida de la pantalla de bienvenida
-    mov     bx, menuWelc            ; Mueve a bx el puntero del tercer texto
-    inc     dh                      ; Incrementa dh
-    mov     dl, 02h                 ; Mueve a dl un 2
-    call    drawText                ; Llama a la funcion encargada de escribir texto
+    mov     bx, menu4           
+    inc     dh                      
+    mov     dl, 02h                 
+    call    drawText                
 
-    ; Elemento decorativo de la pantalla de bienvenida
-    mov     bx, menuDeco2           ; Mueve a bx el puntero del cuarto texto
-    inc     dh                      ; Incrementa dh
-    inc     dh                      ; Incrementa dh
-    mov     dl, 02h                 ; Mueve a dl un 2
-    call    drawText                ; Llama a la funcion encargada de escribir texto
-
-    ; Texto para indicarle al usuario que presione espacio de la pantalla de bienvenida
-    mov     bx, menuSpace           ; Mueve a bx el puntero del quinta texto
-    inc     dh                      ; Incrementa dh
-    inc     dh                      ; Incrementa dh
-    inc     dh                      ; Incrementa dh
-    mov     dl, 02h                 ; Mueve a dl un 2
-    call    drawText                ; Llama a la funcion encargada de escribir texto
+    mov     bx, menu5           
+    mov     dh, 10h                     
+    mov     dl, 02h                 
+    call    drawText                
 
     ret
 
-drawWinnerMenu:                     ; Funcion encargada de escribir los textos del menu de bienvenida
-    mov     bx, [textColor]         ; Mueve a bx el color del texto
-    mov     [textColor], bx         ; Almacena el nuevo bx al color del texto
 
-    ; Elemento decorativo de la pantalla de bienvenida
-    mov     bx, winnerDeco1         ; Mueve a bx el puntero del primer texto
-    mov     dh, 07h                 ; Mueve a dh un 7
-    mov     dl, 02h                 ; Mueve a dl un 2
-    call    drawText                ; Llama a la funcion encargada de escribir texto
+drawInGameText:
+    mov     bx, [textColor]         ; Sets the pixel colors
 
-    ; Titulo de la pantalla de bienvenida
-    mov     bx, winnerTitle         ; Mueve a bx el puntero del segundo texto
-    inc     dh                      ; Incrementa dh
-    inc     dh                      ; Incrementa dh
-    mov     dl, 02h                 ; Mueve a dl un 2
-    call    drawText                ; Llama a la funcion encargada de escribir texto
+    mov     bx, inGame1             ;start * box
+    mov     dh, 0ch                 ;y text coordinate
+    mov     dl, 02h                 ;x text coordinate               
+    call    drawText
 
-    ; Texto de bienvenida de la pantalla de bienvenida
-    mov     bx, winnerWelc          ; Mueve a bx el puntero del tercer texto
-    inc     dh                      ; Incrementa dh
-    mov     dl, 02h                 ; Mueve a dl un 2
-    call    drawText                ; Llama a la funcion encargada de escribir texto
+    mov     bx, inGame2             ;controls text    
+    inc     dh            
+    mov     dl, 02h               
+    call    drawText   
 
-    ; Elemento decorativo de la pantalla de bienvenida
-    mov     bx, winnerDeco2         ; Mueve a bx el puntero del cuarto texto
-    inc     dh                      ; Incrementa dh
-    inc     dh                      ; Incrementa dh
-    mov     dl, 02h                 ; Mueve a dl un 2
-    call    drawText                ; Llama a la funcion encargada de escribir texto
+    mov     bx, inGame3             ;movement text       
+    inc     dh            
+    mov     dl, 02h               
+    call    drawText
 
-    ; Texto para indicarle al usuario que presione espacio de la pantalla de bienvenida
-    mov     bx, winnerSpace         ; Mueve a bx el puntero del quinta texto
-    inc     dh                      ; Incrementa dh
-    inc     dh                      ; Incrementa dh
-    inc     dh                      ; Incrementa dh
-    mov     dl, 02h                 ; Mueve a dl un 2
-    call    drawText                ; Llama a la funcion encargada de escribir texto
+    mov     bx, inGame4             ;restart text
+    inc     dh            
+    mov     dl, 02h               
+    call    drawText
+
+    mov     bx, inGame5             ;pause text
+    inc     dh            
+    mov     dl, 02h               
+    call    drawText
+
+    mov     bx, inGame6             ;Level text
+    inc     dh            
+    mov     dl, 02h               
+    call    drawText
+
+    mov     bx, inGame9             ;end * box
+    mov     dh, 12h          
+    mov     dl, 02h               
+    call    drawText
+
+    ;checks what lvl is drawing to indicate it to the player
+    mov     bx, [level]
+    cmp     bx, 1
+    je      drawInGameTextAux
+    jmp     drawInGameTextAux2
+
 
     ret
 
-; Funcion encargada de dibujar el texto en pantalla --------------------------------------------------
+drawInGameTextAux:
+    mov     bx, inGame7                      
+    mov     dl, 17h
+    mov     dh, 11h               
+    call    drawText
+    ret
 
-drawText:                           ; Funcion encargada de dibujar texto
-    cmp     byte [bx],0             ; Compara el byte que contiene bx con 0
-    jz      finishDraw              ; Si es igual a cero, salta a la funcion de salida. Es un ret
-    jmp     drawChar                ; Sino salta a dibujar un caracter
+drawInGameTextAux2:
+    mov     bx, inGame8                    
+    mov     dl, 17h
+    mov     dh, 11h              
+    call    drawText
+    ret
 
-drawChar:                           ; Funcion encargada de dibujar un caracter
-    push    bx                      ; Hace un push de bx
-    mov     ah, 02h                 ; Mueve a ah un 2
-    mov     bh, 00h                 ; Mueve a bh un 0
-    int     10h                     ; Ejecutar interrupcion
-    pop     bx                      ; Hace pop a bx
 
-    push    bx                      ; Hace push a bx
-    mov     al, [bx]                ; Mueve el contenido de bx a al
+drawWinnerMenu:                     ; Draws the text that is displayed once the player has won
+    mov     bx, [textColor]         ; indicates text color
+    inc     bx                      ; increases the number of the color to give it a rainbow appearance
+    mov     [textColor], bx         ; saves the new color number
+
+    mov     bx, winner1             ; selects the text to display
+    mov     dh, 07h                 ; y coordinate
+    mov     dl, 02h                 ; x coordinate
+    call    drawText                ; draws the text
+
+    mov     bx, winner2             ; changes the text message
+    inc     dh                      ; increses y to draw under the previous message
+    mov     dl, 02h                 
+    call    drawText                
+
+    mov     bx, winner3          
+    inc     dh                      
+    mov     dl, 02h                 
+    call    drawText                
+
+    mov     bx, winner4         
+    inc     dh                                        
+    mov     dl, 02h                 
+    call    drawText                
+
+    mov     bx, winner5         
+    mov     dh, 10h                     
+    mov     dl, 02h                 
+    call    drawText                
+
+    ret
+
+drawText:                           ; Draws text on screen
+    cmp     byte [bx],0             ; checks if the draw is complete
+    jz      finishDraw              ; returns when the draw is finished
+    jmp     drawChar                ; draws next character
+
+drawChar:                           ; Draws a character on screen
+    push    bx                      ; pushes the character on bx
+    mov     ah, 02h                 ; indicates that a character is going to be printed on screen
+    mov     bh, 00h                 ; indicates that its going to be printed in the current page
+    int     10h                     ; calls the interruption
+    pop     bx                      ; pops the character into bx
+
+    push    bx                      
+    mov     al, [bx]                ; saves the current character
     mov     ah, 0ah                 ; Mueve a ah un 10
-    mov     bh, 00h                 ; Mueve a bh un 0
-    mov     bl, [textColor]         ; Mueve el color de texto a bl
-    mov     cx, 01h                 ; Mueve a cx un 1
-    int     10h                     ; Ejecutar interrupcion
-    pop     bx                      ; Hace pop a bx
+    mov     bh, 00h                 
+    mov     bl, [textColor]         ; sets the color of the text
+    mov     cx, 01h                 ; indicates that only one character will be printed
+    int     10h                     ; calls the interruption
+    pop     bx                      
 
-    inc     bx                      ; Incrementa bx
-    inc     dl                      ; Incrementa dl
-    jmp     drawText                ; Salta a la funcion de dibujar texto
+    inc     bx                      ; reads the next byte
+    inc     dl                      
+    jmp     drawText                ; jumps back to the starting cycle
 
-finishDraw:                         ; Funcion de salida de texto
-    ret                             ; Retornar
+finishDraw:                         ; Returns once the text is written
+    ret                             
 
-; Define el nivel 1 y sus variables ----------------------------------------------------------------
 
-setLevel1:                          ; Funcion encargada de iniciar el primer nivel del juego
-    mov     ax, 01h                 ; Mueve 1 a ax
-    mov     [level], ax             ; Mueve ax al nivel actual
+setLevel1:                          
+    mov     ax, 01h                 
+    mov     [level], ax                   ; Sets the player in level 1
 
-    mov     ax, 03h                       ; Mueve 09 a ax
-    mov     [player_x], ax                ; Mueve el 09 a la posicion inicial x del alien
-    mov     [temp_player_x], ax           ; Mueve el 09 a la posicion inicial temporal x del alien
-    mov     ax, 0ah                       ; Mueve 10 a ax
-    mov     [player_y], ax                ; Mueve el 10 a la posicion inicial y del alien
-    mov     [temp_player_y], ax           ; Mueve el 10 a la posicion inicial temporal y del alien
+    mov     ax, 03h                       
+    mov     [player_x], ax                ; player x starting coordinate
+    mov     [temp_player_x], ax           ; starts the temporal x in the same place so the player wont move unintentionally
+    mov     ax, 0ah                       
+    mov     [player_y], ax                ; player y starting coordinate
+    mov     [temp_player_y], ax           ; starts the temporal y in the same place so the player wont move unintentionally
 
-    mov     ax, 00h                       ; Mueve 0 a ax
-    mov     [gamePaused], ax              ; Mueve el contenido de ax a la variable de pausa
+    mov     ax, 00h                       
+    mov     [gamePaused], ax              ; Sets the game to unpaused
     ret
 
-setLevel2:                          ; Funcion encargada de iniciar el primer nivel del juego
-    mov     ax, 02h                 ; Mueve 1 a ax
-    mov     [level], ax             ; Mueve ax al nivel actual
+setLevel2:                                ; Sets the player in level 2
+    mov     ax, 02h                        
+    mov     [level], ax             
     
-    mov     ax, 07h                       ; Mueve 07 a ax
-    mov     [player_x], ax                ; Mueve el 07 a la posicion inicial x del alien
-    mov     [temp_player_x], ax           ; Mueve el 07 a la posicion inicial temporal x del alien
-    mov     ax, 07h                       ; Mueve 07 a ax
-    mov     [player_y], ax                ; Mueve el 07 a la posicion inicial y del alien
-    mov     [temp_player_y], ax           ; Mueve el 07 a la posicion inicial temporal y del alien
+    mov     ax, 07h                       
+    mov     [player_x], ax                
+    mov     [temp_player_x], ax           
+    mov     ax, 07h                       
+    mov     [player_y], ax                
+    mov     [temp_player_y], ax           
 
-    mov     ax, 00h                       ; Mueve 0 a ax
-    mov     [gamePaused], ax              ; Mueve el contenido de ax a la variable de pausa
+    mov     ax, 00h                       
+    mov     [gamePaused], ax              
     ret
 
-; Funcion encargada de retornar --------------------------------------------------
-
-; Render player  **************************************************************************************
 
 renderPlayer:
-    mov     cx, [player_x]            ; Posicion inicial x del alien
-    mov     dx, [player_y]            ; Posicion inicial y del alien
-    jmp     renderPlayerAux           ; Salta a la funcion auxliar
+    mov     cx, [player_x]            ; current x
+    mov     dx, [player_y]            ; current y
+    jmp     renderPlayerAux           
 
 renderPlayerAux:
     mov     ah, 0ch                 ; Draw pixel
     mov     al, [player_color]      ; player color 
     mov     bh, 00h                 ; Page
     int     10h                     ; Interrupt 
-    inc     cx                      ; cx +1
+    inc     cx                      ; cx + 1
     mov     ax, cx                  
     sub     ax, [player_x]          ; Substract player width with the current column
     cmp     ax, [player_size]       ; compares if ax is greater than player size
@@ -403,12 +419,10 @@ deletePlayer:                       ; Funtion to erase player from screen
     ret                             ; return
 
 
-; Checks player inputs -----------------------------------------------------------------------------------------------------------
-
 checkPlayerGameInput:
-    mov     ax, 00h                   ; Reset reg ax
-    cmp     ax, [gamePaused]           ; move the gamePaused Flag to ax
-    je      makeMovements             ; If the game is not paused, player can move 
+    mov     ax, 00h                 ; Reset reg ax
+    cmp     ax, [gamePaused]        ; move the gamePaused Flag to ax
+    je      makeMovements           ; If the game is not paused, player can move 
     jmp     checkPlayerPauseInput   ; If the game is paused, checks if the input is to unpaused the game
 
 
@@ -454,14 +468,13 @@ playerUp:                           ; Moves player up
 
     call    deletePlayer            ; Deletes player from screen
 
-    mov     ax, [player_y]          ; Mueve la posicion y del alien a ax
-    sub     ax, [player_speed]      ; Resta la velocidad del alien a ax
-    mov     [temp_player_y], ax     ; Almacena la nueva posicion en una variable temporal
+    mov     ax, [player_y]          
+    sub     ax, [player_speed]      ; substracts the speed to the player position in y to move up
+    mov     [temp_player_y], ax     ; stores the new position in the temp y
     
-    call    checkPlayerColision     ; Llama a la funcion para detectar colisiones del alien
+    call    checkPlayerColision     ; checks if the movement causes a colition
 
-    mov     [player_y], ax            ; Updates pos y of player
-
+    mov     [player_y], ax          ; Updates pos y of player
 
     ret                             ; return
 
@@ -470,33 +483,33 @@ playerDown:                         ; Moves player down
     mov     ax, [gameHeight]        ; Moves the game height to ax
     add     ax, 06h                 ; add 6 to ax 
     cmp     [player_y], ax          ; compares the player_y to the up border
-    jge      exitRoutine             ; if equal, return. Dont move
+    jge      exitRoutine            ; if equal, return. Dont move
 
     call    deletePlayer            ; Deletes player from screen
 
-    mov     ax, [player_y]          ; Mueve la posicion y del alien a ax
-    add     ax, [player_speed]      ; Resta la velocidad del alien a ax
-    mov     [temp_player_y], ax     ; Almacena la nueva posicion en una variable temporal
-    call    checkPlayerColision     ; Llama a la funcion para detectar colisiones del alien
+    mov     ax, [player_y]          
+    add     ax, [player_speed]      ; adds the speed to the player position in y to move down
+    mov     [temp_player_y], ax     
+    call    checkPlayerColision     
 
-    mov     [player_y], ax            ; Updates pos y of player
+    mov     [player_y], ax          ; Updates pos y of player
 
     ret                             ; return
 
 playerRight:                        ; Moves player right
     mov     ax, [gameWidth]         ; Moves the game height to ax
-    add     ax, 06h                 ; add 5 to ax 
+    add     ax, 06h                 
     cmp     [player_x], ax          ; compares the player_y to the right border
-    jge      exitRoutine             ; if equal, return. Dont move
+    jge      exitRoutine            ; if equal, return. Dont move
 
     call    deletePlayer            ; Deletes player from screen
 
-    mov     ax, [player_x]          ; Mueve la posicion x del alien a ax
-    add     ax, [player_speed]      ; Resta la velocidad del alien a ax
-    mov     [temp_player_x], ax     ; Almacena la nueva posicion en una variable temporal
-    call    checkPlayerColision     ; Llama a la funcion para detectar colisiones del alien
+    mov     ax, [player_x]          ; gets x position
+    add     ax, [player_speed]      ; adds speed to x position
+    mov     [temp_player_x], ax     ; stores the new position in temp variable
+    call    checkPlayerColision     ; checks for colision
 
-    mov     [player_x], ax          ; Updates pos y of player
+    mov     [player_x], ax          ; Updates pos x of player
 
     ret                             ; return
 
@@ -507,17 +520,14 @@ playerLeft:                         ; Moves player left
 
     call    deletePlayer            ; Deletes player from screen
 
-    mov     ax, [player_x]          ; Mueve la posicion x del alien a ax
-    sub     ax, [player_speed]      ; Resta la velocidad del alien a ax
-    mov     [temp_player_x], ax     ; Almacena la nueva posicion en una variable temporal
-    call    checkPlayerColision     ; Llama a la funcion para detectar colisiones del alien
+    mov     ax, [player_x]          
+    sub     ax, [player_speed]      
+    mov     [temp_player_x], ax     
+    call    checkPlayerColision     
 
-    mov     [player_x], ax          ; Updates pos y of player
+    mov     [player_x], ax          
     
-
-    ret                             ; return
-
-; Render walls------------------------------------------------------------------------------
+    ret                             
 
 renderWalls:
     mov    ax, 01h
@@ -530,7 +540,7 @@ renderWallsLvl1Main:
     jmp renderWallsLvl1Loop
 
 renderWallsLvl1Loop:
-    cmp     esi, [total_walls_lvl_1]  ; Compara el contador i con el total de muros en el nivel 2
+    cmp     esi, [total_walls_lvl_1]  ; compares the counter to the totawl walls in level 1
     je      exitRoutine
     mov     cx, [walls_x_start_l1 + 4*esi]            
     mov     dx, [walls_y_start_l1 + 4*esi]
@@ -563,15 +573,12 @@ renderWallsLvl1Aux3:
     jmp renderWallsLvl1Loop
 
 
-
-;-----------------------Render Walls Level 2 -------------------------------------------------
-
 renderWallsLvl2Main:
     mov esi, 0                 ; initialize i to 0
     jmp renderWallsLvl2Loop
 
 renderWallsLvl2Loop:
-    cmp     esi, [total_walls_lvl_2]  ; Compara el contador i con el total de muros en el nivel 2
+    cmp     esi, [total_walls_lvl_2]
     je      exitRoutine
     mov     cx, [walls_x_start_l2 + 4*esi]            
     mov     dx, [walls_y_start_l2 + 4*esi]
@@ -604,7 +611,7 @@ renderWallsLvl2Aux3:
     jmp renderWallsLvl2Loop
 
 
-;-----------------------Render Goal-------------------------------------------------
+;-----------------------Render Goal-----------------------
 
 renderGoal:
     mov    ax, 01h
@@ -627,9 +634,9 @@ renderGoalLevel2:
     jmp renderGoalAux
 
 renderGoalAux:
-    mov     cx, [goal_x]            ; Posicion inicial x del alien
-    mov     dx, [goal_y]            ; Posicion inicial y del alien
-    jmp     renderGoalAux1         ; Salta a la funcion auxliar
+    mov     cx, [goal_x]            
+    mov     dx, [goal_y]            
+    jmp     renderGoalAux1         
 
 renderGoalAux1:
     mov     ah, 0ch                 ; Draw pixel
@@ -683,8 +690,11 @@ unPauseGame:                        ; Unpauses the game
     mov     [gamePaused], ax         ; Moves 0 to the variable gamePaused
     ret                             ; return
 
-;-----------------------Check colisions-------------------------------------------------
+;-----------------------Check colisions-----------------------
 
+;compares if the pixel in the position of the temp x and y of the player, matches the color of a wall
+;if that happens it means the player movement made him collide with a wall
+;But if the color of the pixel is red, it means the player reached the goal
 
 checkPlayerColision:
     push ax
@@ -714,21 +724,16 @@ goalReached:
 
 
 exitPlayerMovement:
-    mov     ax, [player_x]            ; Mueve la posicion x del alien a ax
-    mov     [temp_player_x], ax           ; Almacena ax a la posicion temporal x del alien
-    mov     ax, [player_y]            ; Mueve la posicion y del alien a ax
-    mov     [temp_player_y], ax           ; Almacena ax a la posicion temporal y del alien
+    mov     ax, [player_x]            
+    mov     [temp_player_x], ax           
+    mov     ax, [player_y]            
+    mov     [temp_player_y], ax          
 
     call resetGame 
-
-
-
-
-; Util functions --------------------------------------------------------------------------------------
 
 resetGame:
     call clearScreen
     jmp startGame
 
-exitRoutine:                        ; Funcion encargada de retornar
-    ret                             ; Retornar
+exitRoutine:                        
+    ret                             
