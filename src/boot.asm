@@ -1,6 +1,7 @@
 ; Boot sector for loading an assembly program from USB
 
 org 0x7C00
+bits 16
 
 %define SECTORS_TO_READ 0xA ; Number of sectors to read from disk
 
@@ -8,7 +9,7 @@ jmp short start
 nop
 
 ; Boot Parameter Block
-OEMLabel db "Sistema "	; Disk label
+OEMname db "mkfs.fat"	; Disk label
 BytesPerSector dw 512 ; Bytes per sector
 SectorsPerCluster db 1 ; Sectors per cluster
 ReservedSectors dw 1 ; Reserved sectors for boot record
@@ -23,7 +24,7 @@ HiddenSectors dd 0 ; Number of hidden sectors
 LargeSectors dd 0 ; Number of LBA sectors
 DriveNumber db 0 ; Drive number
 Signature db 0x41 ; Drive signature
-VolumeID dd 0 ; Volume ID
+VolumeID dd 0 ;
 VolumeLabel db "Operativos " ; Volume label (11 characters)
 FileSystem db "FAT12 " ; File system type
 
@@ -43,7 +44,7 @@ sti
 ; Reset disk system
 mov ah, 0
 int 0x13     ; BIOS disk I/O
-jc errorpart
+jc errorLoop
 
 ; Read from disk and write to memory
 mov bx, 0x8000         ; Address to write the program to
@@ -54,13 +55,13 @@ mov cl, 2              ; Sector
 mov ah, 2              ; AH=2: read disk sectors
 int 0x13               ; BIOS disk I/O
 jmp 0x8000
-jc errorpart           ; Jump to error handling if the BIOS returns an error
+jc errorLoop           ; Jump to error handling if the BIOS returns an error
 
 
 
 
 
-errorpart:
+errorLoop:
 ; Print error message
 mov si, errormsg
 mov bh, 0x00 ; Page 0
