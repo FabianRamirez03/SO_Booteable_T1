@@ -90,14 +90,15 @@ winnerSpace dw '   Presione ESPACIO para repetir    ', 0h
 
 ; In-Game Texts ...........................................................................................
 
-inGame1 dw '************************************', 0h
-inGame2 dw '            Controls                ', 0h
-inGame3 dw '      Move-------> Arrow keys       ', 0h
-inGame4 dw '      Restart----> R key            ', 0h
-inGame5 dw '      Pause------> L key            ', 0h
-inGame6 dw '      Current Level:', 0h
-inGame7 dw '1', 0h
-inGame8 dw '2', 0h
+inGame1 dw '*************************************', 0h
+inGame2 dw '*            Controls               *', 0h
+inGame3 dw '*      Move-------> Arrow keys      *', 0h
+inGame4 dw '*      Restart----> R key           *', 0h
+inGame5 dw '*      Pause------> L key           *', 0h
+inGame6 dw '*      Current Level:', 0h
+inGame7 dw '1              *', 0h
+inGame8 dw '2              *', 0h
+inGame9 dw '*************************************', 0h
 
 
 textColor     dw 150h
@@ -236,7 +237,6 @@ checkPlayerMenuAction:              ; Funcion encargada de verificar la tecla pr
 
 drawTextMenu:                       ; Funcion encargada de escribir los textos del menu de bienvenida
     mov     bx, [textColor]         ; Mueve a bx el color del texto
-    mov     [textColor], bx         ; Almacena el nuevo bx al color del texto
 
     ; Elemento decorativo de la pantalla de bienvenida
     mov     bx, menuDeco1           ; Mueve a bx el puntero del primer texto
@@ -277,9 +277,8 @@ drawTextMenu:                       ; Funcion encargada de escribir los textos d
 
 drawInGameText:
     mov     bx, [textColor]         ; Sets the pixel colors
-    mov     [textColor], bx         ; Almacena el nuevo bx al color del texto
 
-    mov     bx, inGame1             ;asteriscos iniciales
+    mov     bx, inGame1             ;start * box
     mov     dh, 0ch                 ;y text coordinate
     mov     dl, 02h                 ;x text coordinate               
     call    drawText
@@ -309,29 +308,38 @@ drawInGameText:
     mov     dl, 02h               
     call    drawText
 
+    mov     bx, inGame9            ;end * box
+    mov     dh, 12h          
+    mov     dl, 02h               
+    call    drawText
+
     ;checks what lvl is drawing to indicate it to the player
     mov     bx, [level]
     cmp     bx, 1
     je      drawInGameTextAux
     jmp     drawInGameTextAux2
 
+
     ret
 
 drawInGameTextAux:
     mov     bx, inGame7                      
-    mov     dl, 17h                
+    mov     dl, 17h
+    mov     dh, 11h               
     call    drawText
     ret
 
 drawInGameTextAux2:
     mov     bx, inGame8                    
-    mov     dl, 17h               
+    mov     dl, 17h
+    mov     dh, 11h              
     call    drawText
     ret
 
 
 drawWinnerMenu:                     ; Funcion encargada de escribir los textos del menu de bienvenida
     mov     bx, [textColor]         ; Mueve a bx el color del texto
+    inc     bx
     mov     [textColor], bx         ; Almacena el nuevo bx al color del texto
 
     ; Elemento decorativo de la pantalla de bienvenida
