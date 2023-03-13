@@ -88,6 +88,17 @@ winnerWelc  dw '              GANASTE               ', 0h
 winnerDeco2 dw '************************************', 0h
 winnerSpace dw '   Presione ESPACIO para repetir    ', 0h
 
+; In-Game Texts ...........................................................................................
+
+inGame1 dw '************************************', 0h
+inGame2 dw '            Controls                ', 0h
+inGame3 dw '      Move-------> Arrow keys       ', 0h
+inGame4 dw '      Restart----> R key            ', 0h
+inGame5 dw '      Pause------> L key            ', 0h
+inGame6 dw '      Current Level:', 0h
+inGame7 dw '1', 0h
+inGame8 dw '2', 0h
+
 
 textColor     dw 150h
 
@@ -106,6 +117,7 @@ startGame:                          ; Funcion de inicio del juego
     call    clearScreen             ; Llama a la funcion para limpiar la pantalla
     call    renderWalls             ; function to draw the walls
     call    renderGoal
+    call    drawInGameText          
     jmp     gameLoop                ; Salta a la funcion principal del programa
 
 startLevel2:
@@ -113,6 +125,7 @@ startLevel2:
     call    clearScreen
     call    renderWalls             ; function to draw the walls
     call    renderGoal
+    call    drawInGameText  
     jmp     gameLoop
 
 ; Inicia el display que mostrara el contenido del juego
@@ -260,6 +273,62 @@ drawTextMenu:                       ; Funcion encargada de escribir los textos d
     call    drawText                ; Llama a la funcion encargada de escribir texto
 
     ret
+
+
+drawInGameText:
+    mov     bx, [textColor]         ; Sets the pixel colors
+    mov     [textColor], bx         ; Almacena el nuevo bx al color del texto
+
+    mov     bx, inGame1             ;asteriscos iniciales
+    mov     dh, 0ch                 ;y text coordinate
+    mov     dl, 02h                 ;x text coordinate               
+    call    drawText
+
+    mov     bx, inGame2             ;controls text    
+    inc     dh            
+    mov     dl, 02h               
+    call    drawText   
+
+    mov     bx, inGame3             ;movement text       
+    inc     dh            
+    mov     dl, 02h               
+    call    drawText
+
+    mov     bx, inGame4             ;restart text
+    inc     dh            
+    mov     dl, 02h               
+    call    drawText
+
+    mov     bx, inGame5             ;pause text
+    inc     dh            
+    mov     dl, 02h               
+    call    drawText
+
+    mov     bx, inGame6             ;Level text
+    inc     dh            
+    mov     dl, 02h               
+    call    drawText
+
+    ;checks what lvl is drawing to indicate it to the player
+    mov     bx, [level]
+    cmp     bx, 1
+    je      drawInGameTextAux
+    jmp     drawInGameTextAux2
+
+    ret
+
+drawInGameTextAux:
+    mov     bx, inGame7                      
+    mov     dl, 17h                
+    call    drawText
+    ret
+
+drawInGameTextAux2:
+    mov     bx, inGame8                    
+    mov     dl, 17h               
+    call    drawText
+    ret
+
 
 drawWinnerMenu:                     ; Funcion encargada de escribir los textos del menu de bienvenida
     mov     bx, [textColor]         ; Mueve a bx el color del texto
